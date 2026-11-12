@@ -108,6 +108,7 @@ export async function addSet(exercise: WorkoutExercise): Promise<WorkoutSet> {
     weightKg: prev?.weightKg ?? null,
     reps: prev?.reps ?? null,
     done: false,
+    rpe: null,
     updatedAt: now(),
     deleted: false,
   } satisfies WorkoutSet)
@@ -115,7 +116,7 @@ export async function addSet(exercise: WorkoutExercise): Promise<WorkoutSet> {
 
 export async function updateSet(
   setId: string,
-  patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'done'>>,
+  patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'done' | 'rpe'>>,
 ): Promise<WorkoutSet> {
   // Read and write in one transaction so quick successive edits (blur, then tick) merge instead of clobbering.
   return db.transaction('rw', db.sets, db.outbox, async () => {

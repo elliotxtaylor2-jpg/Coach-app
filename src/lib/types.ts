@@ -158,6 +158,8 @@ export interface WorkoutSet extends SyncedRow {
   weightKg: number | null
   reps: number | null
   done: boolean
+  /** How hard the set felt, as RPE 6–10 (10 = nothing left). Optional; older rows have none. */
+  rpe?: number | null
 }
 
 export type TableName =

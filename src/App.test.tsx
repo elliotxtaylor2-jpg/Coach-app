@@ -64,6 +64,13 @@ describe('end-to-end: sign up, log a workout, see it in history', () => {
     expect(await screen.findByRole('timer')).toHaveTextContent(/rest/i)
     expect(await within(card).findByText('1/3')).toBeInTheDocument()
 
+    // Effort rating appears once the set is done; tapping saves it as RPE (2 reps left = RPE 8).
+    const twoLeft = await within(card).findByRole('button', { name: 'Back squat set 1: 2 reps left' })
+    await user.click(twoLeft)
+    expect(await within(card).findByRole('button', { name: 'Back squat set 1: 2 reps left', pressed: true })).toBeInTheDocument()
+    const { db } = await import('./lib/db')
+    expect((await db.sets.toArray()).find((s) => s.done)?.rpe).toBe(8)
+
     await user.click(screen.getByRole('button', { name: /finish workout/i }))
     expect(await screen.findByText('set done')).toBeInTheDocument()
     expect(screen.getByText('400 kg')).toBeInTheDocument()

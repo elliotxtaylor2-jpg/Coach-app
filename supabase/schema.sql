@@ -335,3 +335,10 @@ create policy "Versions: enrolled members read" on public.programme_versions for
       )
   )
 );
+
+
+-- ============================================================
+-- M3.1: effort rating per set, for progressive overload later.
+-- RPE 6–10 (10 = no reps left). Safe to re-run.
+-- ============================================================
+alter table public.sets add column if not exists rpe smallint check (rpe is null or (rpe between 6 and 10));

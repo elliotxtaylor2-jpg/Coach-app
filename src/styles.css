@@ -193,6 +193,19 @@ a.list-item:hover, button.list-item:hover { background: #f7f2ea; color: var(--in
 .rest-timer .clock { font-family: var(--serif); font-size: 30px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; }
 .rest-timer .btn { min-height: 44px; background: var(--on-dark); color: var(--ink); border-color: var(--on-dark); padding: 0 18px; }
 
+/* Effort rating under a done set */
+.set-wrap.done { background: var(--good-soft); border-radius: var(--radius-sm); }
+.set-wrap.done .set-row.done { background: transparent; }
+.effort { display: flex; align-items: center; gap: 6px; padding: 0 4px 8px 46px; flex-wrap: wrap; }
+.effort-label { font-size: 12px; color: var(--good); font-weight: 600; margin-right: 2px; }
+.effort-chip {
+  min-width: 40px; height: 32px; padding: 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(77, 107, 60, 0.35); background: var(--card); color: var(--ink-2);
+  font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.effort-chip:hover { border-color: var(--good); }
+.effort-chip[aria-pressed='true'] { background: var(--good); border-color: var(--good); color: #fff; }
+
 /* ---------- Badges & stats ---------- */
 .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; padding: 5px 11px; border-radius: 999px; background: var(--line-soft); color: var(--ink-2); white-space: nowrap; }
 .badge.good { background: var(--good-soft); color: var(--good); }

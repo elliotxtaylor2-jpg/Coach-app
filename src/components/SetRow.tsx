@@ -12,7 +12,21 @@ interface Props {
   readOnly?: boolean
 }
 
-/** One set: weight, reps, done. Edits save on blur; ticking done saves immediately. */
+/** Reps left in the tank → RPE: 4+ left is RPE 6, none left is RPE 10. */
+export const EFFORT_CHOICES = [
+  { rpe: 6, label: '4+' },
+  { rpe: 7, label: '3' },
+  { rpe: 8, label: '2' },
+  { rpe: 9, label: '1' },
+  { rpe: 10, label: '0' },
+] as const
+
+export function effortLabel(rpe: number): string {
+  const left = 10 - rpe
+  return left >= 4 ? '4+ reps left' : left === 0 ? 'Nothing left' : `${left} ${left === 1 ? 'rep' : 'reps'} left`
+}
+
+/** One set: weight, reps, done, and an optional effort rating once done. Edits save on blur; taps save immediately. */
 export function SetRow({ set, index, exerciseName, onCompleted, readOnly }: Props) {
   const [kg, setKg] = useState(set.weightKg?.toString() ?? '')
   const [reps, setReps] = useState(set.reps?.toString() ?? '')
@@ -42,7 +56,12 @@ export function SetRow({ set, index, exerciseName, onCompleted, readOnly }: Prop
     if (done) onCompleted?.()
   }
 
+  async function rate(rpe: number) {
+    await updateSet(set.id, { rpe: set.rpe === rpe ? null : rpe })
+  }
+
   return (
+    <div className={`set-wrap ${set.done ? 'done' : ''}`}>
     <div className={`set-grid set-row ${set.done ? 'done' : ''}`}>
       <span className="set-num">{index + 1}</span>
       <input
@@ -82,6 +101,29 @@ export function SetRow({ set, index, exerciseName, onCompleted, readOnly }: Prop
           <TrashIcon />
         </button>
       )}
+    </div>
+    {set.done && !readOnly && (
+      <div className="effort" role="group" aria-label={`${label}: reps left in the tank`}>
+        <span className="effort-label">Reps left?</span>
+        {EFFORT_CHOICES.map((c) => (
+          <button
+            key={c.rpe}
+            type="button"
+            className="effort-chip"
+            aria-pressed={set.rpe === c.rpe}
+            aria-label={`${label}: ${effortLabel(c.rpe)}`}
+            onClick={() => void rate(c.rpe)}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+    )}
+    {set.done && readOnly && set.rpe != null && (
+      <div className="effort">
+        <span className="badge">{effortLabel(set.rpe)} · RPE {set.rpe}</span>
+      </div>
+    )}
     </div>
   )
 }
