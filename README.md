@@ -1,4 +1,4 @@
-# Coach App
+# Sett
 
 Coaches publish training programmes; members subscribe, follow them and log every set. This repo is the web app (an installable PWA), built milestone by milestone from the [plan](https://claude.ai/artifact/2bS3pLrZ5BH2GxTgeuqjeW).
 

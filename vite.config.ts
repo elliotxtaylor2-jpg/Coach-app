@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Coach App',
-        short_name: 'Coach',
+        name: 'Sett',
+        short_name: 'Sett',
         description: 'Follow your coach’s programme and log every set.',
         theme_color: '#1F1A15',
         background_color: '#F3EEE5',

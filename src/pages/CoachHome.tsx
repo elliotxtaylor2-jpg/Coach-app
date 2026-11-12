@@ -58,7 +58,7 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
   return (
     <main className="shell">
       <div className="topbar">
-        <span className="wordmark">[APP NAME]</span>
+        <span className="wordmark">Sett</span>
         <div className="row">
           <SyncBadge status={sync.status} pending={sync.pending} />
           <button type="button" className="btn ghost small" onClick={() => void signOut()}>Sign out</button>

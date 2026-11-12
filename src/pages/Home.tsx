@@ -29,7 +29,7 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
   return (
     <main className="shell">
       <div className="topbar">
-        <span className="wordmark">[APP NAME]</span>
+        <span className="wordmark">Sett</span>
         <div className="row">
           <SyncBadge status={sync.status} pending={sync.pending} />
           {status?.subscription && <Link to="/account" className="small">Account</Link>}

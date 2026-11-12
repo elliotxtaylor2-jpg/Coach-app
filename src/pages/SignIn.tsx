@@ -37,7 +37,7 @@ export function SignIn() {
 
   return (
     <main className="shell">
-      <span className="wordmark">[APP NAME]</span>
+      <span className="wordmark">Sett</span>
       <div className="auth-hero">
         <span className="eyebrow">{tab === 'create' ? 'Get started' : 'Sign in'}</span>
         <h1>{tab === 'create' ? <>Train with <em>your</em> coach.</> : <>Welcome <em>back</em>.</>}</h1>
