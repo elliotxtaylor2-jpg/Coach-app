@@ -37,10 +37,11 @@ export function SignIn() {
 
   return (
     <main className="shell">
-      <div className="stack" style={{ marginTop: 32 }}>
-        <span className="display" style={{ fontWeight: 700, fontSize: 18 }}>[APP NAME]</span>
-        <h1>{tab === 'create' ? 'Create your account' : 'Welcome back'}</h1>
-        <p className="muted" style={{ margin: 0 }}>Coaches publish programmes. Members follow them and log every set.</p>
+      <span className="wordmark">[APP NAME]</span>
+      <div className="auth-hero">
+        <span className="eyebrow">{tab === 'create' ? 'Get started' : 'Sign in'}</span>
+        <h1>{tab === 'create' ? <>Train with <em>your</em> coach.</> : <>Welcome <em>back</em>.</>}</h1>
+        <p className="lede">Coaches publish programmes. Members follow them and log every set.</p>
       </div>
 
       <div className="segmented" role="group" aria-label="Account">

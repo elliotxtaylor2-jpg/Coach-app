@@ -38,7 +38,7 @@ describe('T03: role isolation', () => {
 
   it('sends signed-out visitors to sign-in', async () => {
     renderAt('/history')
-    expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /train with your coach/i })).toBeInTheDocument()
   })
 })
 
@@ -62,7 +62,7 @@ describe('end-to-end: sign up, log a workout, see it in history', () => {
     await user.click(within(card).getByRole('button', { name: 'Mark Back squat set 1 done' }))
 
     expect(await screen.findByRole('timer')).toHaveTextContent(/rest/i)
-    expect(await within(card).findByText('1/3 done')).toBeInTheDocument()
+    expect(await within(card).findByText('1/3')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /finish workout/i }))
     expect(await screen.findByText('set done')).toBeInTheDocument()
@@ -98,7 +98,7 @@ describe('T04: coach share page', () => {
     expect(screen.getByText('£29.99')).toBeInTheDocument()
     expect(screen.getAllByRole('radio')).toHaveLength(2)
     await user.click(screen.getByRole('button', { name: 'Join Sam' }))
-    expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /train with your coach/i })).toBeInTheDocument()
   })
 
   it('lets a member pick a programme, join, and start its first session', async () => {
@@ -111,7 +111,7 @@ describe('T04: coach share page', () => {
     expect(await within(card).findByText(/Muscle Builder with Sam Rivera/)).toBeInTheDocument()
     await user.click(within(card).getByRole('button', { name: 'Start session' }))
     const squat = await screen.findByRole('region', { name: 'Back squat' })
-    expect(within(squat).getByText(/Target 3 × 5/)).toBeInTheDocument()
+    expect(within(squat).getByText(/3 × 5/)).toBeInTheDocument()
     expect(await within(squat).findAllByLabelText(/reps$/)).toHaveLength(3)
   })
 

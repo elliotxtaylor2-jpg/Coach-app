@@ -84,7 +84,7 @@ export function CoachProfilePage() {
         <label className="row card" style={{ cursor: 'pointer' }}>
           <input type="checkbox" checked={trial} onChange={(e) => { setSaved(false); setTrial(e.target.checked) }} style={{ width: 22, height: 22 }} />
           <span className="grow">
-            <span style={{ display: 'block', fontWeight: 600 }}>Offer a 7-day free trial</span>
+            <span className="title">Offer a 7-day free trial</span>
             <span className="muted small">New members aren't charged until the trial ends.</span>
           </span>
         </label>

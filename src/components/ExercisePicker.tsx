@@ -37,7 +37,7 @@ export function ExercisePicker({ open, onPick, onClose }: { open: boolean; onPic
     <dialog ref={ref} className="sheet" onClose={close} aria-label="Add exercise">
       {open && (
         <div className="sheet-body">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row between">
             <h2>Add exercise</h2>
             <button type="button" className="btn ghost" onClick={close}>Close</button>
           </div>

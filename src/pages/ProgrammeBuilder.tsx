@@ -196,7 +196,7 @@ function Editor({ initial }: { initial: Programme }) {
                 </div>
               </div>
             </details>
-            {exProblems.map((p) => <p key={p.message} className="error small" style={{ margin: 0 }}>{p.message}</p>)}
+            {exProblems.map((p) => <p key={p.message} className="error small">{p.message}</p>)}
           </section>
         )
       })}

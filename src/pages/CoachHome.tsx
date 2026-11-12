@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth, useProfile } from '../app/AuthContext'
 import type { SyncStatus } from '../app/useSync'
-import { ChevronIcon, PlusIcon } from '../components/Icons'
+import { TickIcon, ChevronIcon, PlusIcon } from '../components/Icons'
 import { ShareLink } from '../components/ShareLink'
 import { SyncBadge } from '../components/SyncBadge'
 import { createProgramme, ensureCoachProfile, getCoachProfile, listProgrammes } from '../lib/coach'
@@ -58,22 +58,25 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
   return (
     <main className="shell">
       <div className="topbar">
-        <span className="muted small">Coach dashboard</span>
+        <span className="wordmark">[APP NAME]</span>
         <div className="row">
           <SyncBadge status={sync.status} pending={sync.pending} />
           <button type="button" className="btn ghost small" onClick={() => void signOut()}>Sign out</button>
         </div>
       </div>
-      <h1>Hi, {profile.displayName.split(' ')[0]}</h1>
+      <div className="stack" style={{ gap: 8 }}>
+        <span className="eyebrow">Coach studio</span>
+        <h1>Hello, <em>{profile.displayName.split(' ')[0]}</em>.</h1>
+      </div>
 
-      <div className="card dark stack">
+      <div className="card dark stack" style={{ gap: 6, padding: 24 }}>
         <span className="muted small">Active members</span>
-        <span className="display" style={{ fontSize: 40, fontWeight: 700 }}>{active.length}</span>
+        <span className="hero-number">{active.length}</span>
         <span className="muted small">{coach ? `£${coach.priceGbp.toFixed(2)}/month${coach.takesPayments ? '' : ' · free while in beta'}` : ''}</span>
       </div>
 
       <section className="card stack" aria-label="Payments">
-        <span className="label">Payments</span>
+        <h3>Payments</h3>
         {payout?.chargesEnabled ? (
           <>
             <span className="muted small">Members pay you through Stripe. We take 10%, never more than £30 a month.</span>
@@ -95,11 +98,11 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
 
       {!setupDone && (
         <section className="card stack" aria-label="Get set up">
-          <span className="label">Get set up</span>
+          <h3>Get set up</h3>
           {setupSteps.map((s) => (
             <div key={s.label} className="row">
-              <span aria-hidden="true" style={{ width: 22, height: 22, borderRadius: 11, flex: '0 0 auto', background: s.done ? 'var(--good)' : 'transparent', border: `2px solid ${s.done ? 'var(--good)' : 'var(--input-line)'}` }} />
-              {s.to && !s.done ? <Link to={s.to} className="grow">{s.label}</Link> : <span className="grow" style={{ color: s.done ? 'var(--muted)' : undefined }}>{s.label}</span>}
+              <span aria-hidden="true" className={`check${s.done ? ' on' : ''}`}>{s.done && <TickIcon color="#fff" />}</span>
+              {s.to && !s.done ? <Link to={s.to} className="grow">{s.label}</Link> : <span className={`grow${s.done ? ' done-text' : ''}`}>{s.label}</span>}
               {s.done && <span className="sr-only">done</span>}
             </div>
           ))}
@@ -109,15 +112,13 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
       {coach && <ShareLink slug={coach.slug} />}
       <Link to="/coach/profile" className="btn secondary">Edit your page</Link>
 
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2>Programmes</h2>
-      </div>
+      <div className="section-head"><h2>Programmes</h2></div>
       {programmes.length > 0 && (
         <nav className="list" aria-label="Programmes">
           {programmes.map((p) => (
             <Link key={p.id} to={`/coach/programmes/${p.id}`} className="list-item">
               <span className="grow">
-                <span style={{ display: 'block', fontWeight: 600 }}>{p.title}</span>
+                <span className="title">{p.title}</span>
                 <span className="muted small">
                   {p.draft.weeks.length} {p.draft.weeks.length === 1 ? 'week' : 'weeks'} · {p.draft.weeks[0]?.days.length ?? 0} a week · {p.latestVersion ? `v${p.latestVersion}` : 'draft'}
                   {coach?.featuredProgrammeId === p.id ? ' · featured' : ''}
@@ -132,7 +133,7 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
         <PlusIcon /> New programme
       </button>
 
-      <h2>Members</h2>
+      <div className="section-head"><h2>Members</h2>{members.length > 0 && <span className="muted small">{active.length} active</span>}</div>
       {members.length === 0 ? (
         <p className="muted">No members yet. Share your link to invite your first clients.</p>
       ) : (
@@ -140,8 +141,8 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
           {members.map((m) => (
             <Link key={m.enrolment.id} to={`/coach/members/${m.enrolment.id}`} className="list-item">
               <span className="grow">
-                <span style={{ display: 'block', fontWeight: 600 }}>{m.enrolment.memberName}</span>
-                <span className={`small ${m.enrolment.status === 'active' ? '' : 'muted'}`} style={{ color: m.enrolment.status === 'active' ? 'var(--good)' : undefined, fontWeight: 600 }}>
+                <span className="title">{m.enrolment.memberName}</span>
+                <span className={`badge ${m.enrolment.status === 'active' ? 'good' : ''}`} style={{ marginTop: 4 }}>
                   {m.enrolment.status === 'active' ? 'Active' : 'Cancelled'}
                 </span>
               </span>

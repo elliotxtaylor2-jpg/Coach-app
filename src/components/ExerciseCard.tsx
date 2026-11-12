@@ -18,18 +18,18 @@ export function ExerciseCard({
 
   return (
     <section className="card stack" aria-label={exercise.exerciseName}>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2 style={{ fontSize: 18 }}>{exercise.exerciseName}</h2>
-        <span className="muted small">{done}/{sets.length} done</span>
+      <div className="row between">
+        <h2>{exercise.exerciseName}</h2>
+        <span className={`badge${sets.length > 0 && done === sets.length ? ' good' : ''}`}>{done}/{sets.length}</span>
       </div>
       {exercise.target && (
-        <div className="stack" style={{ gap: 4 }}>
-          <span className="muted small">
-            Target {exercise.target.sets} × {exercise.target.reps}
+        <div className="stack" style={{ gap: 8 }}>
+          <span className="target">
+            <span className="eyebrow" style={{ marginRight: 8 }}>Target</span> {exercise.target.sets} × {exercise.target.reps}
             {exercise.target.load ? ` · ${exercise.target.load}` : ''}
             {exercise.target.restSec ? ` · rest ${exercise.target.restSec}s` : ''}
           </span>
-          {exercise.target.notes && <p className="note" style={{ margin: 0 }}>{exercise.target.notes}</p>}
+          {exercise.target.notes && <p className="note">{exercise.target.notes}</p>}
           {exercise.target.videoUrl && /^https:\/\//.test(exercise.target.videoUrl) && (
             <a href={exercise.target.videoUrl} target="_blank" rel="noopener noreferrer" className="small">Watch demo</a>
           )}

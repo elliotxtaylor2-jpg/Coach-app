@@ -54,11 +54,11 @@ export function EarningsPage() {
       {e.capReached ? (
         <p className="note">You've reached the {formatGbp(MONTHLY_FEE_CAP_PENCE)} fee cap. No more platform fees this month: you keep everything else.</p>
       ) : (
-        <p className="muted small" style={{ margin: 0 }}>
+        <p className="muted small">
           {formatGbp(MONTHLY_FEE_CAP_PENCE - e.platformFeePence)} of platform fees left before this month's cap.
         </p>
       )}
-      <p className="muted small" style={{ margin: 0 }}>Stripe pays your earnings into your bank on its payout schedule.</p>
+      <p className="muted small">Stripe pays your earnings into your bank on its payout schedule.</p>
 
       <h2>Recent payments</h2>
       {recent.length === 0 ? (
@@ -68,7 +68,7 @@ export function EarningsPage() {
           {recent.map((p) => (
             <div key={p.id} className="list-item">
               <span className="grow">
-                <span style={{ display: 'block', fontWeight: 600 }}>{p.kind === 'charge' ? 'Payment' : p.kind === 'refund' ? 'Refund' : 'Dispute'}</span>
+                <span className="title">{p.kind === 'charge' ? 'Payment' : p.kind === 'refund' ? 'Refund' : 'Dispute'}</span>
                 <span className="muted small">{formatDate(p.occurredAt)}</span>
               </span>
               <span style={{ fontWeight: 600, color: p.kind === 'charge' ? undefined : 'var(--warn)' }}>
@@ -105,7 +105,7 @@ export function EarningsPage() {
 
 function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
-    <div className="row" style={{ justifyContent: 'space-between' }}>
+    <div className="row between">
       <span>{label}</span>
       <span style={{ fontWeight: 600, color: muted ? 'var(--muted)' : undefined }}>{value}</span>
     </div>

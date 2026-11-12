@@ -52,6 +52,7 @@ export function OfferPage() {
   const offers = orderedOffers(coach)
   const selected = picked ?? offers[0]?.programmeId ?? null
   const isOwner = profile?.id === coach.id
+  const firstName = coach.displayName.split(' ')[0]
   const initials = coach.displayName.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 
   async function onJoin() {
@@ -79,25 +80,28 @@ export function OfferPage() {
   }
 
   return (
-    <main className="shell" style={{ padding: 0, gap: 0 }}>
-      <section className="stack" style={{ background: 'var(--ink)', color: 'var(--bg)', padding: '40px 20px 28px', gap: 16 }}>
-        {isOwner && <span className="badge" style={{ alignSelf: 'flex-start' }}>Preview: this is what members see</span>}
-        <div className="row" style={{ gap: 14 }}>
-          <div aria-hidden="true" style={{ width: 64, height: 64, borderRadius: 32, background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', Inter, sans-serif", fontWeight: 700, fontSize: 22 }}>{initials}</div>
-          <div className="stack" style={{ gap: 2 }}>
-            <h1 style={{ fontSize: 24 }}>{coach.displayName}</h1>
-            {coach.specialism && <span style={{ color: '#c9cbd1', fontSize: 14 }}>{coach.specialism}</span>}
+    <main className="shell offer">
+      <section className="offer-hero">
+        <div className="row between">
+          <span className="eyebrow">Coaching programme</span>
+          {isOwner && <span className="badge dark">Preview · what members see</span>}
+        </div>
+        <div className="row" style={{ gap: 18, alignItems: 'flex-end' }}>
+          <div className="monogram" aria-hidden="true">{initials}</div>
+          <div className="stack" style={{ gap: 6 }}>
+            <h1>{coach.displayName}</h1>
+            {coach.specialism && <span className="specialism">{coach.specialism}</span>}
           </div>
         </div>
-        {coach.bio && <p style={{ margin: 0, color: '#e2e3e7', lineHeight: 1.5 }}>{coach.bio}</p>}
+        {coach.bio && <p className="bio">{coach.bio}</p>}
       </section>
 
-      <section className="stack" style={{ padding: 20, gap: 16 }}>
+      <section className="offer-body">
         {offers.length === 0 ? (
-          <p className="note">{coach.displayName.split(' ')[0]} hasn't published a programme yet.</p>
+          <p className="note">{firstName} hasn't published a programme yet. Check back soon.</p>
         ) : (
           <div className="stack" role="radiogroup" aria-label="Choose a programme">
-            <span className="eyebrow">{offers.length === 1 ? 'Programme' : 'Choose a programme'}</span>
+            <span className="eyebrow">{offers.length === 1 ? 'The programme' : 'Choose your programme'}</span>
             {offers.map((o) => {
               const on = o.programmeId === selected
               return (
@@ -106,40 +110,42 @@ export function OfferPage() {
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  className="card stack"
-                  style={{ textAlign: 'left', cursor: 'pointer', border: `2px solid ${on ? 'var(--accent)' : 'var(--line)'}` }}
+                  className="option"
                   onClick={() => setPicked(o.programmeId)}
                 >
-                  <span className="row" style={{ justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: "'Space Grotesk', Inter, sans-serif", fontWeight: 700, fontSize: 20 }}>{o.title}</span>
+                  <span className="row between">
+                    <span className="option-title">{o.title}</span>
                     {o.programmeId === coach.featuredProgrammeId && offers.length > 1 && <span className="badge">Coach’s pick</span>}
                   </span>
-                  {o.description && <span className="muted small">{o.description}</span>}
-                  <span className="muted small">{o.weeks} {o.weeks === 1 ? 'week' : 'weeks'} · {o.daysPerWeek} {o.daysPerWeek === 1 ? 'session' : 'sessions'} a week</span>
+                  {o.description && <span className="muted">{o.description}</span>}
+                  <span className="small muted">{o.weeks} {o.weeks === 1 ? 'week' : 'weeks'} · {o.daysPerWeek} {o.daysPerWeek === 1 ? 'session' : 'sessions'} a week</span>
                 </button>
               )
             })}
           </div>
         )}
-        <div className="stack">
-          {['Every session planned, set by set', 'Log weights and reps in seconds', `${coach.displayName.split(' ')[0]} sees your progress and adjusts`].map((t) => (
-            <div key={t} className="row"><TickIcon color="var(--good)" /> {t}</div>
-          ))}
+        <div className="stack" style={{ gap: 10 }}>
+          <span className="eyebrow">What you get</span>
+          <div className="benefits">
+            {['Every session planned, set by set', 'Log weights and reps in seconds', `${firstName} sees your progress and adjusts`].map((t) => (
+              <div key={t}><TickIcon color="var(--accent)" /> {t}</div>
+            ))}
+          </div>
         </div>
       </section>
 
       <div className="spacer" />
-      <section className="stack" style={{ padding: '16px 20px 28px', background: 'var(--card)', borderTop: '1px solid var(--line)' }}>
+      <section className="offer-cta">
         {coach.takesPayments ? (
           <>
-            <div className="segmented" role="radiogroup" aria-label="Plan">
-              <button type="button" role="radio" aria-checked={plan === 'monthly'} className="choice" aria-pressed={plan === 'monthly'} onClick={() => setPlan('monthly')} style={{ minHeight: 64 }}>
-                <span style={{ display: 'block' }}>Monthly</span>
-                <span className="small" style={{ fontWeight: 500 }}>{formatGbp(planPricePence(coach.priceGbp, 'monthly'))} / month</span>
+            <div className="segmented tall" role="radiogroup" aria-label="Plan">
+              <button type="button" role="radio" aria-checked={plan === 'monthly'} className="choice" aria-pressed={plan === 'monthly'} onClick={() => setPlan('monthly')}>
+                <span className="title">Monthly</span>
+                <span className="small muted">{formatGbp(planPricePence(coach.priceGbp, 'monthly'))} / month</span>
               </button>
-              <button type="button" role="radio" aria-checked={plan === 'annual'} className="choice" aria-pressed={plan === 'annual'} onClick={() => setPlan('annual')} style={{ minHeight: 64 }}>
-                <span style={{ display: 'block' }}>Annual · 2 months free</span>
-                <span className="small" style={{ fontWeight: 500 }}>{formatGbp(planPricePence(coach.priceGbp, 'annual'))} / year</span>
+              <button type="button" role="radio" aria-checked={plan === 'annual'} className="choice" aria-pressed={plan === 'annual'} onClick={() => setPlan('annual')}>
+                <span className="title">Annual · 2 months free</span>
+                <span className="small muted">{formatGbp(planPricePence(coach.priceGbp, 'annual'))} / year</span>
               </button>
             </div>
             <span className="muted small">
@@ -151,9 +157,9 @@ export function OfferPage() {
             </span>
           </>
         ) : (
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <span className="display" style={{ fontSize: 26, fontWeight: 700 }}>£{coach.priceGbp.toFixed(2)}<span className="muted" style={{ fontSize: 15, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}> / month</span></span>
-            <span className="muted small">Free while in beta</span>
+          <div className="row between">
+            <span className="price">£{coach.priceGbp.toFixed(2)}<span className="per"> / month</span></span>
+            <span className="badge good">Free while in beta</span>
           </div>
         )}
         {error && <p className="error" role="alert">{error}</p>}
@@ -168,8 +174,8 @@ export function OfferPage() {
               : coach.takesPayments
                 ? coach.trialDays > 0
                   ? `Start ${coach.trialDays}-day free trial`
-                  : `Subscribe to ${coach.displayName.split(' ')[0]}`
-                : `Join ${coach.displayName.split(' ')[0]}`}
+                  : `Subscribe to ${firstName}`
+                : `Join ${firstName}`}
           </button>
         )}
         {coach.takesPayments && !isOwner && <span className="muted small center">Payments are handled securely by Stripe.{payments.mode === 'demo' ? ' Demo mode: no real card is charged.' : ''}</span>}

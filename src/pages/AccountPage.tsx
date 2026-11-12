@@ -53,15 +53,15 @@ export function AccountPage() {
         <section className="card stack" aria-label="Subscription">
           <span className="eyebrow">Subscription</span>
           <h2>{status?.coach?.displayName}</h2>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row between">
             <span>{sub.plan === 'annual' ? 'Annual' : 'Monthly'}</span>
-            <span style={{ fontWeight: 600 }}>{formatGbp(sub.amountPence)} / {sub.plan === 'annual' ? 'year' : 'month'}</span>
+            <span className="strong">{formatGbp(sub.amountPence)} / {sub.plan === 'annual' ? 'year' : 'month'}</span>
           </div>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row between">
             <span>Status</span>
             <span className={`badge ${sub.status === 'active' || sub.status === 'trialing' ? 'good' : 'warn'}`}>{STATUS_LABEL[sub.status] ?? sub.status}</span>
           </div>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row between">
             <span>{sub.cancelAtPeriodEnd || sub.status === 'canceled' ? 'Access until' : sub.status === 'trialing' ? 'First payment' : 'Renews'}</span>
             <span>{formatDate(sub.trialEnd && sub.status === 'trialing' ? sub.trialEnd : sub.currentPeriodEnd)}</span>
           </div>

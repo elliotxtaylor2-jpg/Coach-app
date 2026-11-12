@@ -14,12 +14,12 @@ export function RestTimer({ until, onDismiss }: { until: number | null; onDismis
   if (!until) return null
   const left = (until - now) / 1000
   return (
-    <div className="card dark row" role="timer" aria-live="off" style={{ justifyContent: 'space-between', position: 'sticky', bottom: 12 }}>
-      <span className="stack" style={{ gap: 2 }}>
-        <span className="muted small">{left > 0 ? 'Rest' : 'Rest over'}</span>
-        <span className="big-number">{formatClock(left)}</span>
+    <div className="card dark rest-timer" role="timer" aria-live="off">
+      <span className="row" style={{ gap: 14 }}>
+        <span className="eyebrow" style={{ color: 'var(--on-dark-muted)' }}>{left > 0 ? 'Rest' : 'Go'}</span>
+        <span className="clock">{formatClock(left)}</span>
       </span>
-      <button type="button" className="btn secondary" onClick={onDismiss}>{left > 0 ? 'Skip' : 'Done'}</button>
+      <button type="button" className="btn" onClick={onDismiss}>{left > 0 ? 'Skip' : 'Done'}</button>
     </div>
   )
 }

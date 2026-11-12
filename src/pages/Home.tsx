@@ -29,7 +29,7 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
   return (
     <main className="shell">
       <div className="topbar">
-        <span className="muted small">Hi, {profile.displayName.split(' ')[0]}</span>
+        <span className="wordmark">[APP NAME]</span>
         <div className="row">
           <SyncBadge status={sync.status} pending={sync.pending} />
           {status?.subscription && <Link to="/account" className="small">Account</Link>}
@@ -38,8 +38,8 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
       </div>
 
       <div className="stack">
-        <span className="eyebrow">Today</span>
-        <h1>{active ? 'Workout in progress' : 'Ready to train?'}</h1>
+        <span className="eyebrow">{greeting()}, {profile.displayName.split(' ')[0]}</span>
+        <h1>{active ? <>Workout <em>in progress</em>.</> : <>Ready to <em>train</em>?</>}</h1>
       </div>
 
       {active ? (
@@ -61,8 +61,8 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
         </button>
       )}
 
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2>Recent</h2>
+      <div className="section-head">
+        <h2>Recent sessions</h2>
         {recent.length > 0 && <Link to="/history" className="small">All history</Link>}
       </div>
       {recent.length === 0 ? (
@@ -72,7 +72,7 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
           {recent.slice(0, 3).map((w) => (
             <Link key={w.id} to={`/history/${w.id}`} className="list-item">
               <span className="grow">
-                <span style={{ display: 'block', fontWeight: 600 }}>{w.name}</span>
+                <span className="title">{w.name}</span>
                 <span className="muted small">{formatDate(w.startedAt)}</span>
               </span>
               <ChevronIcon />
@@ -82,4 +82,9 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
       )}
     </main>
   )
+}
+
+function greeting(): string {
+  const h = new Date().getHours()
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
 }

@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'Coach App',
         short_name: 'Coach',
         description: 'Follow your coach’s programme and log every set.',
-        theme_color: '#16181D',
-        background_color: '#F5F4F0',
+        theme_color: '#1F1A15',
+        background_color: '#F3EEE5',
         display: 'standalone',
         start_url: '/',
         icons: [

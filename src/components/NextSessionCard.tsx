@@ -14,7 +14,7 @@ export function NextSessionCard({ memberId, disabled }: { memberId: string; disa
     return (
       <div className="card stack">
         <span className="eyebrow">Programme complete</span>
-        <p style={{ margin: 0 }}>You've finished every session. Your coach will set you up with what's next.</p>
+        <p>You've finished every session. Your coach will set you up with what's next.</p>
       </div>
     )
   }
@@ -29,29 +29,29 @@ export function NextSessionCard({ memberId, disabled }: { memberId: string; disa
   }
 
   return (
-    <section className="card stack" aria-label="Next session">
-      <span className="eyebrow">Week {weekIndex + 1} · Session {dayIndex + 1}</span>
-      <h2>{day.name || `Session ${dayIndex + 1}`}</h2>
+    <section className="card dark stack" aria-label="Next session" style={{ padding: 24, gap: 14 }}>
+      <span className="eyebrow" style={{ color: '#d9a57f' }}>Up next · Week {weekIndex + 1}, session {dayIndex + 1}</span>
+      <h2 style={{ fontSize: 30 }}>{day.name || `Session ${dayIndex + 1}`}</h2>
       <span className="muted small">
         {version.title}
         {coach ? ` with ${coach.displayName}` : ''} · session {sessionNumber} of {totalSessions}
       </span>
       <div className="progress" aria-label={`This week: ${completedThisWeek} of ${daysPerWeek} sessions done`}>
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <span className="small" style={{ fontWeight: 600 }}>This week</span>
+        <div className="row between">
+          <span className="small strong">This week</span>
           <span className="muted small">{completedThisWeek} of {daysPerWeek}</span>
         </div>
-        <div className="progress-track"><div className="progress-fill" style={{ width: `${(completedThisWeek / daysPerWeek) * 100}%` }} /></div>
+        <div className="progress-track" style={{ background: 'rgba(243,238,229,0.15)' }}><div className="progress-fill" style={{ background: '#d9a57f', width: `${(completedThisWeek / daysPerWeek) * 100}%` }} /></div>
       </div>
-      <ol className="stack" style={{ margin: 0, paddingLeft: 20 }}>
+      <ol className="session-list">
         {day.exercises.map((ex) => (
           <li key={ex.id}>
-            <span style={{ fontWeight: 600 }}>{ex.name}</span>{' '}
+            <span className="grow strong">{ex.name}</span>
             <span className="muted small">{ex.sets} × {ex.reps}{ex.load ? ` · ${ex.load}` : ''}</span>
           </li>
         ))}
       </ol>
-      <button type="button" className="btn block" onClick={() => void onStart()} disabled={disabled}>Start session</button>
+      <button type="button" className="btn block" style={{ background: 'var(--on-dark)', color: 'var(--ink)', borderColor: 'var(--on-dark)' }} onClick={() => void onStart()} disabled={disabled}>Start session</button>
     </section>
   )
 }

@@ -26,7 +26,7 @@ export function History() {
           {workouts.map((w) => (
             <Link key={w.id} to={`/history/${w.id}`} className="list-item">
               <span className="grow">
-                <span style={{ display: 'block', fontWeight: 600 }}>{w.name}</span>
+                <span className="title">{w.name}</span>
                 <span className="muted small">{formatDate(w.startedAt)} · {formatDuration(w.startedAt, w.finishedAt)}</span>
               </span>
               <ChevronIcon />
@@ -64,9 +64,9 @@ export function WorkoutDetail() {
       <h1>{workout.name}</h1>
       {summary && (
         <div className="card stat-grid">
-          <div className="stack" style={{ gap: 2 }}><span className="big-number">{summary.exercises}</span><span className="muted small">{summary.exercises === 1 ? 'exercise' : 'exercises'}</span></div>
-          <div className="stack" style={{ gap: 2 }}><span className="big-number">{summary.setsDone}</span><span className="muted small">{summary.setsDone === 1 ? 'set done' : 'sets done'}</span></div>
-          <div className="stack" style={{ gap: 2 }}><span className="big-number">{formatKg(summary.volumeKg)}</span><span className="muted small">volume</span></div>
+          <div className="stat"><span className="big-number">{summary.exercises}</span><span className="stat-label">{summary.exercises === 1 ? 'exercise' : 'exercises'}</span></div>
+          <div className="stat"><span className="big-number">{summary.setsDone}</span><span className="stat-label">{summary.setsDone === 1 ? 'set done' : 'sets done'}</span></div>
+          <div className="stat"><span className="big-number">{formatKg(summary.volumeKg)}</span><span className="stat-label">volume</span></div>
         </div>
       )}
       {exercises.map((ex) => (

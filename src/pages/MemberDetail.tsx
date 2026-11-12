@@ -55,7 +55,7 @@ function WorkoutLog({ workout }: { workout: Workout }) {
   return (
     <details className="card">
       <summary style={{ cursor: 'pointer' }}>
-        <span style={{ fontWeight: 600 }}>{workout.name}</span>{' '}
+        <span className="strong">{workout.name}</span>{' '}
         <span className="muted small">
           {formatDate(workout.startedAt)} · {formatDuration(workout.startedAt, workout.finishedAt)}
           {summary ? ` · ${summary.setsDone} sets · ${formatKg(summary.volumeKg)}` : ''}
