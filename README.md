@@ -2,6 +2,14 @@
 
 Coaches publish training programmes; members subscribe, follow them and log every set. This repo is the web app (an installable PWA), built milestone by milestone from the [plan](https://claude.ai/artifact/2bS3pLrZ5BH2GxTgeuqjeW).
 
+## What's in M2 (coach side)
+
+- **Coach page and share link:** coaches set name, bio, specialism, monthly price and their link (`/c/your-name`). The page works for signed-out visitors and lists every published programme for members to choose from, with the coach's pick first.
+- **Programme builder:** weeks × sessions × exercises, each with sets, reps (ranges like `8-10` and timed sets like `45s`), load, rest, notes and a video link. Reorder, copy a week to all weeks, autosave, and checks that say exactly what to fix before publishing.
+- **Versions:** publishing creates a new, unchangeable version. Members get it from their next session; sessions already logged keep the prescription they were done with.
+- **Members follow a programme:** joining is free until payments arrive in M3. Home shows the next session with this week's progress; starting it pre-fills sets from the coach's target reps and the member's last weights.
+- **Coach dashboard:** set-up checklist, share link, programmes, members with status and last workout, and each member's full set logs.
+
 ## What's in M1 (tracker core)
 
 - **Accounts with roles:** sign up as a coach or a member. Members land on their training home; coaches land on a coach dashboard (tools arrive in M2).
@@ -28,6 +36,8 @@ Without Supabase keys the app runs in **demo mode**: accounts and workouts stay 
 3. **Settings → API**: copy the project URL and the `anon` public key.
 4. `cp .env.example .env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 5. Restart `npm run dev`.
+
+If you set up Supabase before M2, run `supabase/schema.sql` again: it adds the M2 tables and is safe to re-run.
 
 Optional while testing: **Authentication → Providers → Email** → turn off "Confirm email" so sign-up logs you straight in.
 
@@ -62,10 +72,14 @@ supabase/     schema.sql (tables, sign-up trigger, row-level security)
 | T01 New coach sign-up | `src/lib/auth.test.ts` |
 | T02 Sign in with Apple | Not in the web MVP; added with the iOS app |
 | T03 Role isolation | `src/App.test.tsx` (screens) and `supabase/schema.sql` (row-level security) |
-| T13 Today's workout pre-filled | `src/lib/repo.test.ts` (from last completed sets until coach programmes exist) |
+| T04 Share link page | `src/App.test.tsx` |
+| T05 Build and publish 4 × 3 × 5 | `src/lib/coach.test.ts` |
+| T06 Validation before publishing | `src/lib/coach.test.ts`, `src/App.test.tsx` |
+| T07 Edit a live programme | `src/lib/enrolment.test.ts` |
+| T13 Today's workout pre-filled | `src/lib/enrolment.test.ts` (from the programme), `src/lib/repo.test.ts` (last weights) |
 | T14 Offline logging, synced once | `src/lib/sync.test.ts` |
 | End-to-end: sign up → log → history | `src/App.test.tsx` |
 
-## Next: M2 coach side
+## Next: M3 payments
 
-Coach profile and share link, programme builder with versions, and members following a coach's programme (T04–T07).
+Stripe Connect for coach payouts, web checkout with a capped 10% platform fee, annual plans, cancellations, refunds and failed renewals.

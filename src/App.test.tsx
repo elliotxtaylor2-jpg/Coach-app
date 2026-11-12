@@ -33,7 +33,7 @@ describe('T03: role isolation', () => {
 
   it('sends a coach who opens member screens to the coach dashboard', async () => {
     renderAt('/history', await signedInAs('coach'))
-    expect(await screen.findByText(/coach tools are on the way/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Programmes' })).toBeInTheDocument()
   })
 
   it('sends signed-out visitors to sign-in', async () => {
@@ -70,5 +70,71 @@ describe('end-to-end: sign up, log a workout, see it in history', () => {
 
     await user.click(screen.getByRole('link', { name: 'Done' }))
     expect(await screen.findByRole('navigation', { name: /recent workouts/i })).toBeInTheDocument()
+  })
+})
+
+// T04: the coach's share link opens a public page showing name, bio, price and a join button.
+describe('T04: coach share page', () => {
+  async function publishedCoach() {
+    const { createProgramme, emptyExercise, ensureCoachProfile, publishProgramme, saveDraft, updateCoachProfile } = await import('./lib/coach')
+    const coach = { id: 'coach-x', email: 'sam@example.com', displayName: 'Sam Rivera', role: 'coach' as const }
+    await ensureCoachProfile(coach)
+    await updateCoachProfile(coach.id, { bio: 'Strength for busy people', priceGbp: 29.99 })
+    for (const title of ['Strength Block', 'Muscle Builder']) {
+      const p = await createProgramme(coach.id, title, 2, 1)
+      const draft = structuredClone(p.draft)
+      draft.weeks.forEach((w) => (w.days[0].exercises = [{ ...emptyExercise('Back squat'), sets: 3, reps: '5' }]))
+      await saveDraft(p.id, { draft })
+      await publishProgramme(p.id)
+    }
+  }
+
+  it('shows the coach to a signed-out visitor and sends them to sign up on join', async () => {
+    await publishedCoach()
+    const user = userEvent.setup()
+    renderAt('/c/sam-rivera')
+    expect(await screen.findByRole('heading', { name: 'Sam Rivera' })).toBeInTheDocument()
+    expect(screen.getByText('Strength for busy people')).toBeInTheDocument()
+    expect(screen.getByText('£29.99')).toBeInTheDocument()
+    expect(screen.getAllByRole('radio')).toHaveLength(2)
+    await user.click(screen.getByRole('button', { name: 'Join Sam' }))
+    expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()
+  })
+
+  it('lets a member pick a programme, join, and start its first session', async () => {
+    await publishedCoach()
+    const user = userEvent.setup()
+    renderAt('/c/sam-rivera', await signedInAs('member'))
+    await user.click(await screen.findByRole('radio', { name: /muscle builder/i }))
+    await user.click(screen.getByRole('button', { name: 'Join Sam' }))
+    const card = await screen.findByRole('region', { name: 'Next session' })
+    expect(await within(card).findByText(/Muscle Builder with Sam Rivera/)).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Start session' }))
+    const squat = await screen.findByRole('region', { name: 'Back squat' })
+    expect(within(squat).getByText(/Target 3 × 5/)).toBeInTheDocument()
+    expect(await within(squat).findAllByLabelText(/reps$/)).toHaveLength(3)
+  })
+
+  it('shows a clear message for a link that doesn’t exist', async () => {
+    renderAt('/c/nobody-here')
+    expect(await screen.findByRole('heading', { name: 'Coach not found' })).toBeInTheDocument()
+  })
+})
+
+describe('coach builds and publishes a programme on screen', () => {
+  it('blocks publishing until sessions are filled, then publishes', async () => {
+    const user = userEvent.setup()
+    renderAt('/coach', await signedInAs('coach'))
+    await user.click(await screen.findByRole('button', { name: /new programme/i }))
+    await user.selectOptions(await screen.findByLabelText('Weeks'), '1')
+    await user.selectOptions(screen.getByLabelText('Sessions a week'), '1')
+    await user.click(screen.getByRole('button', { name: 'Publish programme' }))
+    expect(await screen.findByText(/fix 1 issue/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /add exercise/i }))
+    await user.type(screen.getByLabelText('Exercise 1 name'), 'Back squat')
+    await user.click(screen.getByRole('button', { name: 'Publish programme' }))
+    expect(await screen.findByText(/published version 1/i)).toBeInTheDocument()
+    expect(screen.getByText('On your page, shown first')).toBeInTheDocument()
   })
 })

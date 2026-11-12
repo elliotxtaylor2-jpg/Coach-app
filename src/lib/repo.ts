@@ -1,11 +1,11 @@
 import { db } from './db'
 import type { TableName, Workout, WorkoutExercise, WorkoutSet } from './types'
 
-const now = () => new Date().toISOString()
-const newId = () => crypto.randomUUID()
+export const now = () => new Date().toISOString()
+export const newId = () => crypto.randomUUID()
 
 /** Every local write goes through here: save the row and queue it for sync, in one transaction. */
-async function save<T extends { id: string }>(table: TableName, row: T): Promise<T> {
+export async function save<T extends { id: string }>(table: TableName, row: T): Promise<T> {
   await db.transaction('rw', db.table(table), db.outbox, async () => {
     await db.table(table).put(row)
     const key = `${table}:${row.id}`

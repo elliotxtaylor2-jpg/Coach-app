@@ -9,6 +9,10 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 export const supabase: SupabaseClient | null = url && anonKey ? createClient(url, anonKey) : null
 
 const REMOTE_TABLE: Record<TableName, string> = {
+  coachProfiles: 'coach_profiles',
+  programmes: 'programmes',
+  programmeVersions: 'programme_versions',
+  enrolments: 'enrolments',
   workouts: 'workouts',
   workoutExercises: 'workout_exercises',
   sets: 'sets',
@@ -33,6 +37,11 @@ export function supabaseAdapter(client: SupabaseClient): RemoteAdapter {
       const { data, error } = await client.from(REMOTE_TABLE[table]).select('*').gt('updated_at', sinceIso)
       if (error) throw new Error(error.message)
       return (data ?? []).map((r) => mapKeys(r as Record<string, unknown>, toCamel) as unknown as SyncedRow)
+    },
+    async getCoachBySlug(slug) {
+      const { data, error } = await client.from('coach_profiles').select('*').eq('slug', slug).eq('deleted', false).maybeSingle()
+      if (error) throw new Error(error.message)
+      return data ? (mapKeys(data as Record<string, unknown>, toCamel) as unknown as SyncedRow) : null
     },
   }
 }

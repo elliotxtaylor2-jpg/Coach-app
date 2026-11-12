@@ -22,6 +22,19 @@ export function ExerciseCard({
         <h2 style={{ fontSize: 18 }}>{exercise.exerciseName}</h2>
         <span className="muted small">{done}/{sets.length} done</span>
       </div>
+      {exercise.target && (
+        <div className="stack" style={{ gap: 4 }}>
+          <span className="muted small">
+            Target {exercise.target.sets} × {exercise.target.reps}
+            {exercise.target.load ? ` · ${exercise.target.load}` : ''}
+            {exercise.target.restSec ? ` · rest ${exercise.target.restSec}s` : ''}
+          </span>
+          {exercise.target.notes && <p className="note" style={{ margin: 0 }}>{exercise.target.notes}</p>}
+          {exercise.target.videoUrl && /^https:\/\//.test(exercise.target.videoUrl) && (
+            <a href={exercise.target.videoUrl} target="_blank" rel="noopener noreferrer" className="small">Watch demo</a>
+          )}
+        </div>
+      )}
       <div className="set-grid set-head" aria-hidden="true">
         <span className="center">Set</span><span>kg</span><span>Reps</span><span className="center">Done</span><span />
       </div>

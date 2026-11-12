@@ -6,8 +6,12 @@ import { useSync } from './app/useSync'
 import { demoAuth, supabaseAuth, type AuthBackend } from './lib/auth'
 import { supabase } from './lib/supabase'
 import { CoachHome } from './pages/CoachHome'
+import { CoachProfilePage } from './pages/CoachProfilePage'
 import { History, WorkoutDetail } from './pages/History'
 import { Home } from './pages/Home'
+import { MemberDetail } from './pages/MemberDetail'
+import { OfferPage } from './pages/OfferPage'
+import { ProgrammeBuilder } from './pages/ProgrammeBuilder'
 import { SignIn } from './pages/SignIn'
 import { WorkoutPage } from './pages/WorkoutPage'
 
@@ -17,11 +21,15 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/c/:slug" element={<OfferPage />} />
       <Route path="/" element={<RequireRole role="member"><Home sync={sync} /></RequireRole>} />
       <Route path="/workout/:id" element={<RequireRole role="member"><WorkoutPage /></RequireRole>} />
       <Route path="/history" element={<RequireRole role="member"><History /></RequireRole>} />
       <Route path="/history/:id" element={<RequireRole role="member"><WorkoutDetail /></RequireRole>} />
-      <Route path="/coach" element={<RequireRole role="coach"><CoachHome /></RequireRole>} />
+      <Route path="/coach" element={<RequireRole role="coach"><CoachHome sync={sync} /></RequireRole>} />
+      <Route path="/coach/profile" element={<RequireRole role="coach"><CoachProfilePage /></RequireRole>} />
+      <Route path="/coach/programmes/:id" element={<RequireRole role="coach"><ProgrammeBuilder /></RequireRole>} />
+      <Route path="/coach/members/:id" element={<RequireRole role="coach"><MemberDetail /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

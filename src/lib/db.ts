@@ -1,7 +1,20 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { OutboxEntry, Workout, WorkoutExercise, WorkoutSet } from './types'
+import type {
+  CoachProfile,
+  Enrolment,
+  OutboxEntry,
+  Programme,
+  ProgrammeVersion,
+  Workout,
+  WorkoutExercise,
+  WorkoutSet,
+} from './types'
 
 export class AppDB extends Dexie {
+  coachProfiles!: EntityTable<CoachProfile, 'id'>
+  programmes!: EntityTable<Programme, 'id'>
+  programmeVersions!: EntityTable<ProgrammeVersion, 'id'>
+  enrolments!: EntityTable<Enrolment, 'id'>
   workouts!: EntityTable<Workout, 'id'>
   workoutExercises!: EntityTable<WorkoutExercise, 'id'>
   sets!: EntityTable<WorkoutSet, 'id'>
@@ -16,6 +29,14 @@ export class AppDB extends Dexie {
       sets: 'id, workoutExerciseId, workoutId, userId',
       outbox: 'key, queuedAt',
       meta: 'key',
+    })
+    // M2: coaches, programmes and enrolments. Existing M1 data is kept as is.
+    this.version(2).stores({
+      coachProfiles: 'id, userId, slug',
+      programmes: 'id, userId',
+      programmeVersions: 'id, programmeId, userId, [programmeId+version]',
+      enrolments: 'id, userId, coachId, programmeId',
+      workouts: 'id, userId, startedAt, finishedAt, enrolmentId',
     })
   }
 }

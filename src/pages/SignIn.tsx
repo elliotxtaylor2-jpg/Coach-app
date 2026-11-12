@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../app/AuthContext'
 import { homeFor } from '../app/RequireRole'
 import type { Role } from '../lib/types'
@@ -7,15 +7,18 @@ import type { Role } from '../lib/types'
 export function SignIn() {
   const { profile, mode, signIn, signUp } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const state = (location.state ?? {}) as { from?: string; role?: Role }
+  const returnTo = state.from && state.from.startsWith('/') ? state.from : null
   const [tab, setTab] = useState<'create' | 'sign-in'>('create')
-  const [role, setRole] = useState<Role>('member')
+  const [role, setRole] = useState<Role>(state.role ?? 'member')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  if (profile) return <Navigate to={homeFor(profile.role)} replace />
+  if (profile) return <Navigate to={returnTo ?? homeFor(profile.role)} replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -24,7 +27,7 @@ export function SignIn() {
     try {
       if (tab === 'create') await signUp({ email, password, displayName, role })
       else await signIn({ email, password })
-      navigate('/', { replace: true })
+      navigate(returnTo ?? '/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Try again.')
     } finally {

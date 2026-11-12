@@ -7,6 +7,8 @@ export interface RemoteAdapter {
   upsert(table: TableName, rows: SyncedRow[]): Promise<void>
   /** Rows changed on the server since an ISO timestamp, for this user. */
   pullSince(table: TableName, sinceIso: string): Promise<SyncedRow[]>
+  /** Public coach page lookup for visitors who haven't synced that coach yet. */
+  getCoachBySlug?(slug: string): Promise<SyncedRow | null>
 }
 
 export interface SyncResult {
@@ -16,7 +18,8 @@ export interface SyncResult {
   error?: string
 }
 
-const TABLES: TableName[] = ['workouts', 'workoutExercises', 'sets']
+/** Parents before children, so foreign keys on the server are satisfied. */
+const TABLES: TableName[] = ['coachProfiles', 'programmes', 'programmeVersions', 'enrolments', 'workouts', 'workoutExercises', 'sets']
 
 /**
  * Push every queued local change, then pull remote changes.

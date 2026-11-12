@@ -7,6 +7,10 @@ import type { SyncedRow, TableName } from './types'
 /** An in-memory server that can be switched offline. */
 function fakeRemote() {
   const store: Record<TableName, Map<string, SyncedRow>> = {
+    coachProfiles: new Map(),
+    programmes: new Map(),
+    programmeVersions: new Map(),
+    enrolments: new Map(),
     workouts: new Map(),
     workoutExercises: new Map(),
     sets: new Map(),
