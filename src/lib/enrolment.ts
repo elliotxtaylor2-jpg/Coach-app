@@ -1,7 +1,8 @@
 import { latestVersion, repsToNumber } from './coach'
 import { db } from './db'
 import { lastCompletedSet, newId, now, save } from './repo'
-import type { CoachProfile, Enrolment, PlannedDay, Profile, ProgrammeVersion, Workout, WorkoutExercise, WorkoutSet } from './types'
+import { programmeAccess, type Access } from './billing'
+import type { CoachProfile, Enrolment, PlannedDay, Profile, ProgrammeVersion, Subscription, Workout, WorkoutExercise, WorkoutSet } from './types'
 
 /** Join one of a coach's published programmes. Free in M2; M3 puts payment in front of this. */
 export async function joinCoach(member: Profile, coach: CoachProfile, programmeId: string): Promise<Enrolment> {
@@ -19,6 +20,7 @@ export async function joinCoach(member: Profile, coach: CoachProfile, programmeI
     memberName: member.displayName,
     status: 'active',
     startedAt: t,
+    billing: 'beta',
     updatedAt: t,
     deleted: false,
   } satisfies Enrolment)
@@ -146,4 +148,28 @@ export async function coachMembers(coachId: string): Promise<MemberSummary[]> {
     out.push({ enrolment, lastWorkoutAt: last, sessionsDone: workouts.filter((w) => w.enrolmentId === enrolment.id).length })
   }
   return out.sort((a, b) => (a.enrolment.status === b.enrolment.status ? (b.lastWorkoutAt ?? '').localeCompare(a.lastWorkoutAt ?? '') : a.enrolment.status === 'active' ? -1 : 1))
+}
+
+// ---------- Member's billing state ----------
+
+export interface MemberStatus {
+  enrolment: Enrolment
+  coach: CoachProfile | undefined
+  subscription: Subscription | undefined
+  access: Access
+}
+
+/** Everything the member's home needs to decide what to show: can they train, and what to tell them. */
+export async function memberStatus(memberId: string, now = new Date().toISOString()): Promise<MemberStatus | null> {
+  const enrolment = await activeEnrolment(memberId)
+  if (!enrolment) return null
+  const coach = await db.coachProfiles.get(enrolment.coachId)
+  const subscription = (await db.subscriptions.where('enrolmentId').equals(enrolment.id).toArray()).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0]
+  const access = programmeAccess({
+    billing: enrolment.billing ?? 'beta',
+    betaEndsAt: coach?.betaEndsAt ?? null,
+    subscription: subscription ? { status: subscription.status, currentPeriodEnd: subscription.currentPeriodEnd } : null,
+    now,
+  })
+  return { enrolment, coach, subscription, access }
 }

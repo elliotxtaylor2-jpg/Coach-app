@@ -52,6 +52,12 @@ export interface CoachProfile extends SyncedRow {
   featuredProgrammeId: string | null
   /** Public summaries of every published programme, so the share page never exposes programme content. */
   offers: ProgrammeOffer[]
+  /** Free trial length for new members: 0 or 7 (Q8). */
+  trialDays: number
+  /** When set, beta members who joined free must subscribe from this time (Q10). */
+  betaEndsAt: string | null
+  /** Set by the payment server once the coach's Stripe account can take charges. */
+  takesPayments?: boolean
 }
 
 export interface ProgrammeOffer {
@@ -86,6 +92,45 @@ export interface Enrolment extends SyncedRow {
   memberName: string
   status: 'active' | 'cancelled'
   startedAt: string
+  /** 'beta' = joined free before the coach took payments; 'paid' = created by checkout. */
+  billing?: 'beta' | 'paid'
+}
+
+// ---------- Payments (rows written only by the payment server; the app reads them) ----------
+
+/** A coach's Stripe connected account. id = userId = the coach. */
+export interface PayoutAccount extends SyncedRow {
+  stripeAccountId: string
+  detailsSubmitted: boolean
+  chargesEnabled: boolean
+  payoutsEnabled: boolean
+}
+
+/** A member's subscription to a coach. userId = the member. */
+export interface Subscription extends SyncedRow {
+  coachId: string
+  enrolmentId: string
+  programmeId: string
+  plan: 'monthly' | 'annual'
+  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired'
+  amountPence: number
+  currentPeriodEnd: string
+  trialEnd: string | null
+  cancelAtPeriodEnd: boolean
+  stripeSubscriptionId: string
+  stripeCustomerId: string
+}
+
+/** One line of the payment ledger. userId = the member; coachId = who was paid. */
+export interface Payment extends SyncedRow {
+  coachId: string
+  memberId: string
+  kind: 'charge' | 'refund' | 'dispute'
+  amountPence: number
+  platformFeePence: number
+  processingFeePence: number
+  occurredAt: string
+  externalId: string
 }
 
 export interface Workout extends SyncedRow {
@@ -123,6 +168,9 @@ export type TableName =
   | 'workouts'
   | 'workoutExercises'
   | 'sets'
+  | 'payoutAccounts'
+  | 'subscriptions'
+  | 'payments'
 
 export interface OutboxEntry {
   /** One pending change per row: `${table}:${rowId}`. */

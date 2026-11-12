@@ -6,7 +6,9 @@ import { useSync } from './app/useSync'
 import { demoAuth, supabaseAuth, type AuthBackend } from './lib/auth'
 import { supabase } from './lib/supabase'
 import { CoachHome } from './pages/CoachHome'
+import { AccountPage } from './pages/AccountPage'
 import { CoachProfilePage } from './pages/CoachProfilePage'
+import { EarningsPage } from './pages/EarningsPage'
 import { History, WorkoutDetail } from './pages/History'
 import { Home } from './pages/Home'
 import { MemberDetail } from './pages/MemberDetail'
@@ -30,6 +32,8 @@ export function AppRoutes() {
       <Route path="/coach/profile" element={<RequireRole role="coach"><CoachProfilePage /></RequireRole>} />
       <Route path="/coach/programmes/:id" element={<RequireRole role="coach"><ProgrammeBuilder /></RequireRole>} />
       <Route path="/coach/members/:id" element={<RequireRole role="coach"><MemberDetail /></RequireRole>} />
+      <Route path="/coach/earnings" element={<RequireRole role="coach"><EarningsPage /></RequireRole>} />
+      <Route path="/account" element={<RequireRole role="member"><AccountPage /></RequireRole>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

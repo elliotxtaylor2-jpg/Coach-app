@@ -14,6 +14,9 @@ function fakeRemote() {
     workouts: new Map(),
     workoutExercises: new Map(),
     sets: new Map(),
+    payoutAccounts: new Map(),
+    subscriptions: new Map(),
+    payments: new Map(),
   }
   const received: { table: TableName; id: string }[] = []
   let online = true

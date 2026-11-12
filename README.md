@@ -2,6 +2,16 @@
 
 Coaches publish training programmes; members subscribe, follow them and log every set. This repo is the web app (an installable PWA), built milestone by milestone from the [plan](https://claude.ai/artifact/2bS3pLrZ5BH2GxTgeuqjeW).
 
+## What's in M3 (payments)
+
+- **Coaches are the seller** (Stripe Connect Express). A coach connects their bank through Stripe's hosted set-up; their page then shows plans instead of free joining.
+- **Plans:** monthly, or annual at ten months' price (two months free). Coaches can offer a 7-day free trial.
+- **Platform fee:** 10% of each payment, never more than £30 per coach per calendar month. Stripe takes 10% up front; the webhook refunds anything above the cap.
+- **Members:** checkout on Stripe, banners for trial, failed payment (access kept while Stripe retries), cancelled (access to the end of the paid period) and paused; an account page to update a card or cancel.
+- **Beta members** who joined free stay free until their coach gives them a week's notice to subscribe.
+- **Earnings:** gross, refunds and disputes, platform fee, estimated card fees and net for the month, with how much of the cap is left.
+- **Demo mode** runs the same payment code against a simulated Stripe on the device, so every flow works without a Stripe account. No real card is charged.
+
 ## What's in M2 (coach side)
 
 - **Coach page and share link:** coaches set name, bio, specialism, monthly price and their link (`/c/your-name`). The page works for signed-out visitors and lists every published programme for members to choose from, with the coach's pick first.
@@ -41,6 +51,28 @@ If you set up Supabase before M2, run `supabase/schema.sql` again: it adds the M
 
 Optional while testing: **Authentication → Providers → Email** → turn off "Confirm email" so sign-up logs you straight in.
 
+## Turn on payments (Stripe)
+
+Needs Supabase set up first, and the [Supabase CLI](https://supabase.com/docs/guides/cli).
+
+1. Create a [Stripe](https://dashboard.stripe.com/register) account and stay in **test mode**. Turn on **Connect** (Express accounts, UK).
+2. Copy the test **secret key** (Developers → API keys).
+3. Deploy the server functions from this folder:
+   ```bash
+   supabase link --project-ref <your-project-ref>
+   supabase secrets set STRIPE_SECRET_KEY=sk_test_... APP_ORIGIN=https://<your-app-domain>
+   supabase functions deploy connect-onboard
+   supabase functions deploy create-checkout
+   supabase functions deploy billing-portal
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+4. In Stripe: Developers → Webhooks → **Add endpoint**, choose **Events on Connected accounts**, URL `https://<project-ref>.supabase.co/functions/v1/stripe-webhook`, events: `account.updated`, `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `charge.refunded`, `charge.dispute.created`.
+5. Copy the endpoint's signing secret and run `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...`.
+6. Re-run `supabase/schema.sql` to add the payment tables.
+7. Test with Stripe's test cards, e.g. `4242 4242 4242 4242` (any future date, any CVC), `4000 0000 0000 0002` (declined), `4000 0027 6000 3184` (3-D Secure).
+
+Card processing fees on the earnings screen are an estimate (1.5% + 20p, UK cards); Stripe's dashboard has the exact figures. VAT handling assumes coaches are the seller and still needs an accountant's sign-off before going live.
+
 ## Install on a phone
 
 Deploy `dist/` to any static host (Vercel, Netlify, Cloudflare Pages), open it on the phone and choose **Add to Home Screen**. It then opens full-screen and works offline.
@@ -76,10 +108,18 @@ supabase/     schema.sql (tables, sign-up trigger, row-level security)
 | T05 Build and publish 4 × 3 × 5 | `src/lib/coach.test.ts` |
 | T06 Validation before publishing | `src/lib/coach.test.ts`, `src/App.test.tsx` |
 | T07 Edit a live programme | `src/lib/enrolment.test.ts` |
+| T08 Web subscribe, happy path | `src/server/payments.test.ts`, `src/App.test.tsx` |
+| T10 Declined card · T11 3-D Secure · T12 Double tap | `src/server/payments.test.ts` |
+| T15 Payout onboarding · T16 Payouts blocked | `src/server/payments.test.ts` |
+| T17 Fee calculation · fee cap | `src/lib/billing.test.ts`, `src/server/payments.test.ts` |
+| T19 Reconciliation | `src/lib/billing.test.ts`, `src/server/payments.test.ts` |
+| T20 Cancel · T22 Failed renewal | `src/server/payments.test.ts`, `src/App.test.tsx` |
+| T21 Refund · T23 Chargeback | `src/server/payments.test.ts` |
+| T09 iOS in-app purchase · T18 in-app fee | Not in the web app; added with the iOS app |
 | T13 Today's workout pre-filled | `src/lib/enrolment.test.ts` (from the programme), `src/lib/repo.test.ts` (last weights) |
 | T14 Offline logging, synced once | `src/lib/sync.test.ts` |
 | End-to-end: sign up → log → history | `src/App.test.tsx` |
 
-## Next: M3 payments
+## Next
 
-Stripe Connect for coach payouts, web checkout with a capped 10% platform fee, annual plans, cancellations, refunds and failed renewals.
+Closed beta with real coaches (M5), then wearables and app-store builds (M4): Apple Health and Health Connect need a native app.

@@ -208,3 +208,130 @@ begin
     );
   end loop;
 end $$;
+
+-- ============================================================
+-- M3: payments. Rows here are written only by the payment server
+-- (Edge Functions using the service-role key); the app reads them.
+-- Safe to run again.
+-- ============================================================
+
+alter table public.coach_profiles add column if not exists trial_days integer not null default 7 check (trial_days in (0, 7));
+alter table public.coach_profiles add column if not exists beta_ends_at timestamptz;
+alter table public.coach_profiles add column if not exists takes_payments boolean not null default false;
+alter table public.enrolments add column if not exists billing text not null default 'beta' check (billing in ('beta', 'paid'));
+
+-- A coach's Stripe connected account (coaches are the seller).
+create table if not exists public.payout_accounts (
+  id uuid primary key references public.coach_profiles (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade check (user_id = id),
+  stripe_account_id text not null unique,
+  details_submitted boolean not null default false,
+  charges_enabled boolean not null default false,
+  payouts_enabled boolean not null default false,
+  updated_at timestamptz not null,
+  deleted boolean not null default false
+);
+
+create table if not exists public.subscriptions (
+  id uuid primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  coach_id uuid not null references public.coach_profiles (id) on delete cascade,
+  enrolment_id uuid not null references public.enrolments (id) on delete cascade,
+  programme_id uuid not null references public.programmes (id) on delete cascade,
+  plan text not null check (plan in ('monthly', 'annual')),
+  status text not null,
+  amount_pence integer not null,
+  current_period_end timestamptz not null,
+  trial_end timestamptz,
+  cancel_at_period_end boolean not null default false,
+  stripe_subscription_id text not null unique,
+  stripe_customer_id text not null,
+  updated_at timestamptz not null,
+  deleted boolean not null default false
+);
+
+-- Payment ledger: one row per charge, refund or dispute. external_id is Stripe's id, unique so retries never double count.
+create table if not exists public.payments (
+  id uuid primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  coach_id uuid not null references public.coach_profiles (id) on delete cascade,
+  member_id uuid not null,
+  kind text not null check (kind in ('charge', 'refund', 'dispute')),
+  amount_pence integer not null check (amount_pence >= 0),
+  platform_fee_pence integer not null check (platform_fee_pence >= 0),
+  processing_fee_pence integer not null default 0,
+  occurred_at timestamptz not null,
+  external_id text not null unique,
+  updated_at timestamptz not null,
+  deleted boolean not null default false
+);
+
+-- Stripe event ids already handled, so a retried webhook is applied once.
+create table if not exists public.stripe_events (
+  id text primary key,
+  received_at timestamptz not null default now()
+);
+
+create index if not exists subscriptions_member on public.subscriptions (user_id, updated_at);
+create index if not exists subscriptions_coach on public.subscriptions (coach_id, updated_at);
+create index if not exists payments_coach on public.payments (coach_id, occurred_at);
+
+alter table public.payout_accounts enable row level security;
+alter table public.subscriptions enable row level security;
+alter table public.payments enable row level security;
+alter table public.stripe_events enable row level security; -- no policies: server only
+
+-- Read-only to the people involved. No insert/update policies: only the server writes.
+drop policy if exists "Payout account: coach reads" on public.payout_accounts;
+create policy "Payout account: coach reads" on public.payout_accounts for select using (auth.uid() = user_id);
+drop policy if exists "Subscriptions: member or coach reads" on public.subscriptions;
+create policy "Subscriptions: member or coach reads" on public.subscriptions for select using (auth.uid() = user_id or auth.uid() = coach_id);
+drop policy if exists "Payments: member or coach reads" on public.payments;
+create policy "Payments: member or coach reads" on public.payments for select using (auth.uid() = user_id or auth.uid() = coach_id);
+
+-- Members may join free ('beta') only while the coach isn't taking payments yet.
+drop policy if exists "Enrolments: member" on public.enrolments;
+drop policy if exists "Enrolments: member reads" on public.enrolments;
+create policy "Enrolments: member reads" on public.enrolments for select using (auth.uid() = user_id);
+drop policy if exists "Enrolments: member joins free" on public.enrolments;
+create policy "Enrolments: member joins free" on public.enrolments for insert with check (
+  auth.uid() = user_id
+  and billing = 'beta'
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'member')
+  and not exists (select 1 from public.payout_accounts pa where pa.id = coach_id and pa.charges_enabled)
+);
+drop policy if exists "Enrolments: member updates" on public.enrolments;
+create policy "Enrolments: member updates" on public.enrolments for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Only the server may change how an enrolment is paid for.
+create or replace function public.guard_enrolment_billing()
+returns trigger language plpgsql as $$
+begin
+  if new.billing is distinct from old.billing and coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'billing can only be changed by the payment server';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists enrolments_guard_billing on public.enrolments;
+create trigger enrolments_guard_billing before update on public.enrolments
+  for each row execute function public.guard_enrolment_billing();
+
+-- Programme content only for members with access: free beta (until the coach ends it) or a live subscription.
+drop policy if exists "Versions: enrolled members read" on public.programme_versions;
+create policy "Versions: enrolled members read" on public.programme_versions for select using (
+  exists (
+    select 1 from public.enrolments e
+    join public.coach_profiles cp on cp.id = e.coach_id
+    where e.user_id = auth.uid() and e.programme_id = programme_versions.programme_id
+      and e.status = 'active' and not e.deleted
+      and (
+        (e.billing = 'beta' and (cp.beta_ends_at is null or now() < cp.beta_ends_at))
+        or exists (
+          select 1 from public.subscriptions s
+          where s.enrolment_id = e.id
+            and (s.status in ('trialing', 'active', 'past_due') or (s.status = 'canceled' and s.current_period_end > now()))
+        )
+      )
+  )
+);

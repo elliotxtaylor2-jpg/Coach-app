@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth, useProfile } from '../app/AuthContext'
 import type { SyncStatus } from '../app/useSync'
 import { ChevronIcon } from '../components/Icons'
 import { NextSessionCard } from '../components/NextSessionCard'
 import { SyncBadge } from '../components/SyncBadge'
-import { activeEnrolment } from '../lib/enrolment'
+import { AccessBanner } from '../components/AccessBanner'
+import { memberStatus } from '../lib/enrolment'
 import { getActiveWorkout, startWorkout, workoutHistory } from '../lib/repo'
 import { formatDate } from '../lib/format'
 
@@ -15,7 +16,10 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
   const navigate = useNavigate()
   const active = useLiveQuery(() => getActiveWorkout(profile.id), [profile.id])
   const recent = useLiveQuery(() => workoutHistory(profile.id), [profile.id]) ?? []
-  const enrolment = useLiveQuery(async () => (await activeEnrolment(profile.id)) ?? null, [profile.id])
+  const status = useLiveQuery(() => memberStatus(profile.id), [profile.id])
+  const enrolment = status === undefined ? undefined : (status?.enrolment ?? null)
+  const [params] = useSearchParams()
+  const justPaid = params.get('paid') === '1' && !status?.subscription
 
   async function onStart() {
     const w = await startWorkout(profile.id)
@@ -28,6 +32,7 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
         <span className="muted small">Hi, {profile.displayName.split(' ')[0]}</span>
         <div className="row">
           <SyncBadge status={sync.status} pending={sync.pending} />
+          {status?.subscription && <Link to="/account" className="small">Account</Link>}
           <button type="button" className="btn ghost small" onClick={() => void signOut()}>Sign out</button>
         </div>
       </div>
@@ -41,7 +46,10 @@ export function Home({ sync }: { sync: { status: SyncStatus; pending: number } }
         <Link className="btn block" to={`/workout/${active.id}`}>Resume workout</Link>
       ) : null}
 
-      {enrolment ? (
+      {justPaid && <p className="note" role="status">Payment received. Setting up your programme… this takes a few seconds.</p>}
+      {status && <AccessBanner status={status} />}
+
+      {enrolment && status?.access.ok ? (
         <NextSessionCard memberId={profile.id} disabled={!!active} />
       ) : enrolment === null ? (
         <p className="note">Following a coach? Open the link they sent you to join their programme.</p>

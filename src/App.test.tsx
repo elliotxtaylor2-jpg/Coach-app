@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from './App'
 import { AuthProvider } from './app/AuthContext'
 import { demoAuth } from './lib/auth'
@@ -136,5 +136,89 @@ describe('coach builds and publishes a programme on screen', () => {
     await user.click(screen.getByRole('button', { name: 'Publish programme' }))
     expect(await screen.findByText(/published version 1/i)).toBeInTheDocument()
     expect(screen.getByText('On your page, shown first')).toBeInTheDocument()
+  })
+})
+
+describe('M3: payments on screen (demo gateway, simulated Stripe)', () => {
+  async function payingCoach(trialDays = 7) {
+    const { createProgramme, emptyExercise, ensureCoachProfile, publishProgramme, saveDraft, updateCoachProfile } = await import('./lib/coach')
+    const { payments } = await import('./lib/payments')
+    const coach = { id: 'coach-pay', email: 'sam@example.com', displayName: 'Sam Rivera', role: 'coach' as const }
+    await ensureCoachProfile(coach)
+    await updateCoachProfile(coach.id, { priceGbp: 29.99, trialDays })
+    const p = await createProgramme(coach.id, 'Strength Block', 1, 1)
+    const draft = structuredClone(p.draft)
+    draft.weeks[0].days[0].exercises = [{ ...emptyExercise('Back squat'), sets: 3, reps: '5' }]
+    await saveDraft(p.id, { draft })
+    await publishProgramme(p.id)
+    await payments.setUpPayouts(coach)
+    return coach
+  }
+
+  it('shows plans once the coach takes payments, and starts a free trial', async () => {
+    await payingCoach(7)
+    const user = userEvent.setup()
+    renderAt('/c/sam-rivera', await signedInAs('member'))
+    expect(await screen.findByRole('radio', { name: /annual · 2 months free/i })).toBeInTheDocument()
+    expect(screen.getByText(/7-day free trial, then £29\.99 a month/)).toBeInTheDocument()
+    await user.click(screen.getByRole('radio', { name: /annual/i }))
+    expect(screen.getByText(/£299\.90 a year \(save £59\.98\)/)).toBeInTheDocument()
+    await user.click(screen.getByRole('radio', { name: /monthly/i }))
+    await user.click(screen.getByRole('button', { name: 'Start 7-day free trial' }))
+    expect(await screen.findByText(/free trial until/i)).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Next session' })).toBeInTheDocument()
+  })
+
+  it('lets the member cancel and keep access to the end of the period', async () => {
+    await payingCoach(0)
+    const { demoGateway } = await import('./lib/payments')
+    const { db } = await import('./lib/db')
+    const member = await signedInAs('member')
+    const profile = (await member.current())!
+    await demoGateway(() => true).checkout(profile, (await db.coachProfiles.get('coach-pay'))!, (await db.programmes.toArray())[0].id, 'monthly')
+
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderAt('/account', member)
+    expect(await screen.findByText('£29.99 / month')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel subscription' }))
+    expect(await screen.findByText(/cancelled\. you can keep training until/i)).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('shows coach earnings with the fee taken', async () => {
+    await payingCoach(0)
+    const { demoGateway } = await import('./lib/payments')
+    const { db } = await import('./lib/db')
+    const { demoAuth: auth } = await import('./lib/auth')
+    const m = await auth(localStorage).signUp({ email: 'm2@example.com', password: 'password-123', displayName: 'Member Two', role: 'member' })
+    await demoGateway(() => true).checkout(m, (await db.coachProfiles.get('coach-pay'))!, (await db.programmes.toArray())[0].id, 'monthly')
+    const coachBackend = demoAuth(localStorage)
+    await coachBackend.signOut()
+    localStorage.setItem('coach-app:demo-users', JSON.stringify([...JSON.parse(localStorage.getItem('coach-app:demo-users') ?? '[]'), { id: 'coach-pay', email: 'sam@example.com', displayName: 'Sam Rivera', role: 'coach', password: 'password-123' }]))
+    await coachBackend.signIn({ email: 'sam@example.com', password: 'password-123' })
+    renderAt('/coach/earnings', coachBackend)
+    const month = await screen.findByRole('region', { name: 'This month' })
+    expect(await within(month).findByText('£29.99')).toBeInTheDocument()
+    expect(within(month).getByText('−£3.00')).toBeInTheDocument()
+    expect(screen.getByText(/£27\.00 of platform fees left/)).toBeInTheDocument()
+  })
+
+  it('pauses the programme when the coach ends the free beta (Q10)', async () => {
+    const { createProgramme, emptyExercise, ensureCoachProfile, publishProgramme, saveDraft, updateCoachProfile } = await import('./lib/coach')
+    const { joinCoach } = await import('./lib/enrolment')
+    const coach = { id: 'coach-beta', email: 'jo@example.com', displayName: 'Jo Bloggs', role: 'coach' as const }
+    const page = await ensureCoachProfile(coach)
+    const p = await createProgramme(coach.id, 'Block', 1, 1)
+    const draft = structuredClone(p.draft)
+    draft.weeks[0].days[0].exercises = [emptyExercise('Row')]
+    await saveDraft(p.id, { draft })
+    await publishProgramme(p.id)
+    const member = await signedInAs('member')
+    await joinCoach((await member.current())!, { ...page, offers: [{ programmeId: p.id, title: 'Block', description: '', weeks: 1, daysPerWeek: 1 }] }, p.id)
+    await updateCoachProfile(coach.id, { betaEndsAt: new Date(Date.now() - 1000).toISOString() })
+    renderAt('/', member)
+    expect(await screen.findByText(/free beta has ended/i)).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Next session' })).not.toBeInTheDocument()
   })
 })

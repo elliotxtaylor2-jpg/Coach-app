@@ -130,3 +130,7 @@ details > summary { list-style-position: inside; }
 .progress-track { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.topbar { flex-wrap: wrap; row-gap: 6px; }
+.topbar > *, .topbar .row > * { white-space: nowrap; }
+.topbar .row { gap: 8px; }
+.badge { white-space: nowrap; }

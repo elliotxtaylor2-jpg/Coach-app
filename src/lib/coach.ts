@@ -38,12 +38,14 @@ export async function ensureCoachProfile(profile: Profile): Promise<CoachProfile
     priceGbp: 29.99,
     featuredProgrammeId: null,
     offers: [],
+    trialDays: 7,
+    betaEndsAt: null,
     updatedAt: now(),
     deleted: false,
   } satisfies CoachProfile)
 }
 
-export type ProfilePatch = Partial<Pick<CoachProfile, 'displayName' | 'bio' | 'specialism' | 'priceGbp' | 'slug'>>
+export type ProfilePatch = Partial<Pick<CoachProfile, 'displayName' | 'bio' | 'specialism' | 'priceGbp' | 'slug' | 'trialDays' | 'betaEndsAt'>>
 
 export function validateProfile(p: ProfilePatch): Partial<Record<keyof ProfilePatch, string>> {
   const errors: Partial<Record<keyof ProfilePatch, string>> = {}

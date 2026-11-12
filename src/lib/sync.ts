@@ -19,7 +19,7 @@ export interface SyncResult {
 }
 
 /** Parents before children, so foreign keys on the server are satisfied. */
-const TABLES: TableName[] = ['coachProfiles', 'programmes', 'programmeVersions', 'enrolments', 'workouts', 'workoutExercises', 'sets']
+const TABLES: TableName[] = ['coachProfiles', 'programmes', 'programmeVersions', 'enrolments', 'workouts', 'workoutExercises', 'sets', 'payoutAccounts', 'subscriptions', 'payments']
 
 /**
  * Push every queued local change, then pull remote changes.

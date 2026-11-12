@@ -3,8 +3,11 @@ import type {
   CoachProfile,
   Enrolment,
   OutboxEntry,
+  Payment,
+  PayoutAccount,
   Programme,
   ProgrammeVersion,
+  Subscription,
   Workout,
   WorkoutExercise,
   WorkoutSet,
@@ -18,6 +21,9 @@ export class AppDB extends Dexie {
   workouts!: EntityTable<Workout, 'id'>
   workoutExercises!: EntityTable<WorkoutExercise, 'id'>
   sets!: EntityTable<WorkoutSet, 'id'>
+  payoutAccounts!: EntityTable<PayoutAccount, 'id'>
+  subscriptions!: EntityTable<Subscription, 'id'>
+  payments!: EntityTable<Payment, 'id'>
   outbox!: EntityTable<OutboxEntry, 'key'>
   meta!: EntityTable<{ key: string; value: string }, 'key'>
 
@@ -37,6 +43,12 @@ export class AppDB extends Dexie {
       programmeVersions: 'id, programmeId, userId, [programmeId+version]',
       enrolments: 'id, userId, coachId, programmeId',
       workouts: 'id, userId, startedAt, finishedAt, enrolmentId',
+    })
+    // M3: payments. Written by the payment server (or the demo gateway), read by the app.
+    this.version(3).stores({
+      payoutAccounts: 'id, userId, stripeAccountId',
+      subscriptions: 'id, userId, coachId, enrolmentId, stripeSubscriptionId',
+      payments: 'id, userId, coachId, externalId, occurredAt',
     })
   }
 }

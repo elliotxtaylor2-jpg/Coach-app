@@ -12,6 +12,7 @@ export function CoachProfilePage() {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [trial, setTrial] = useState(true)
 
   useEffect(() => {
     void ensureCoachProfile(profile)
@@ -20,6 +21,7 @@ export function CoachProfilePage() {
   useEffect(() => {
     if (coach && !loaded) {
       setForm({ displayName: coach.displayName, bio: coach.bio, specialism: coach.specialism, price: coach.priceGbp.toFixed(2), slug: coach.slug })
+      setTrial((coach.trialDays ?? 7) > 0)
       setLoaded(true)
     }
   }, [coach, loaded])
@@ -42,7 +44,7 @@ export function CoachProfilePage() {
     e.preventDefault()
     setError(null)
     try {
-      await updateCoachProfile(profile.id, patch)
+      await updateCoachProfile(profile.id, { ...patch, trialDays: trial ? 7 : 0 })
       setSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.')
@@ -79,6 +81,13 @@ export function CoachProfilePage() {
           </div>
           {errors.slug && <span className="error small">{errors.slug}</span>}
         </div>
+        <label className="row card" style={{ cursor: 'pointer' }}>
+          <input type="checkbox" checked={trial} onChange={(e) => { setSaved(false); setTrial(e.target.checked) }} style={{ width: 22, height: 22 }} />
+          <span className="grow">
+            <span style={{ display: 'block', fontWeight: 600 }}>Offer a 7-day free trial</span>
+            <span className="muted small">New members aren't charged until the trial ends.</span>
+          </span>
+        </label>
         {error && <p className="error" role="alert">{error}</p>}
         {saved && <p className="badge good" role="status">Saved</p>}
         <button type="submit" className="btn block" disabled={Object.keys(errors).length > 0}>Save page</button>

@@ -8,6 +8,8 @@ import { ShareLink } from '../components/ShareLink'
 import { SyncBadge } from '../components/SyncBadge'
 import { createProgramme, ensureCoachProfile, getCoachProfile, listProgrammes } from '../lib/coach'
 import { coachMembers } from '../lib/enrolment'
+import { db } from '../lib/db'
+import { payments } from '../lib/payments'
 import { formatDate } from '../lib/format'
 
 export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: number } }) {
@@ -18,6 +20,21 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
   const programmes = useLiveQuery(() => listProgrammes(profile.id), [profile.id]) ?? []
   const members = useLiveQuery(() => coachMembers(profile.id), [profile.id]) ?? []
   const [creating, setCreating] = useState(false)
+  const payout = useLiveQuery(async () => (await db.payoutAccounts.get(profile.id)) ?? null, [profile.id])
+  const [payoutError, setPayoutError] = useState<string | null>(null)
+  const [payoutBusy, setPayoutBusy] = useState(false)
+
+  async function onSetUpPayouts() {
+    setPayoutBusy(true)
+    setPayoutError(null)
+    try {
+      await payments.setUpPayouts(profile)
+    } catch (err) {
+      setPayoutError(err instanceof Error ? err.message : 'Could not start payout set-up.')
+    } finally {
+      setPayoutBusy(false)
+    }
+  }
 
   useEffect(() => {
     void ensureCoachProfile(profile)
@@ -27,6 +44,7 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
   const setupSteps = [
     { label: 'Add a bio and price', done: !!coach?.bio, to: '/coach/profile' },
     { label: 'Publish a programme', done: programmes.some((p) => p.latestVersion > 0), to: programmes[0] ? `/coach/programmes/${programmes[0].id}` : null },
+    { label: 'Set up payouts', done: !!payout?.chargesEnabled, to: null },
     { label: 'Get your first member', done: active.length > 0, to: null },
   ]
   const setupDone = setupSteps.every((s) => s.done)
@@ -51,8 +69,29 @@ export function CoachHome({ sync }: { sync: { status: SyncStatus; pending: numbe
       <div className="card dark stack">
         <span className="muted small">Active members</span>
         <span className="display" style={{ fontSize: 40, fontWeight: 700 }}>{active.length}</span>
-        <span className="muted small">{coach ? `£${coach.priceGbp.toFixed(2)}/month · free while in beta` : ''}</span>
+        <span className="muted small">{coach ? `£${coach.priceGbp.toFixed(2)}/month${coach.takesPayments ? '' : ' · free while in beta'}` : ''}</span>
       </div>
+
+      <section className="card stack" aria-label="Payments">
+        <span className="label">Payments</span>
+        {payout?.chargesEnabled ? (
+          <>
+            <span className="muted small">Members pay you through Stripe. We take 10%, never more than £30 a month.</span>
+            <Link to="/coach/earnings" className="btn secondary">See earnings</Link>
+          </>
+        ) : (
+          <>
+            <span className="muted small">
+              {payout ? 'Finish your Stripe set-up to start taking payments.' : 'Connect your bank through Stripe to start taking payments. About 5 minutes.'}
+              {payments.mode === 'demo' ? ' Demo mode: this completes instantly.' : ''}
+            </span>
+            {payoutError && <p className="error small">{payoutError}</p>}
+            <button type="button" className="btn" onClick={() => void onSetUpPayouts()} disabled={payoutBusy}>
+              {payout ? 'Finish payout set-up' : 'Set up payouts with Stripe'}
+            </button>
+          </>
+        )}
+      </section>
 
       {!setupDone && (
         <section className="card stack" aria-label="Get set up">

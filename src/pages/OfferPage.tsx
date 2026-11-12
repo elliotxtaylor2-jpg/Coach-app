@@ -5,7 +5,9 @@ import { useAuth } from '../app/AuthContext'
 import { TickIcon } from '../components/Icons'
 import { findCoachBySlug, orderedOffers } from '../lib/coach'
 import { db } from '../lib/db'
+import { annualSavingPence, formatGbp, planPricePence, type Plan } from '../lib/billing'
 import { joinCoach } from '../lib/enrolment'
+import { payments } from '../lib/payments'
 import { supabase, supabaseAdapter } from '../lib/supabase'
 import type { CoachProfile } from '../lib/types'
 
@@ -19,6 +21,7 @@ export function OfferPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
+  const [plan, setPlan] = useState<Plan>('monthly')
 
   // Not on this device yet (a visitor from Instagram): look it up on the server.
   useEffect(() => {
@@ -61,8 +64,13 @@ export function OfferPage() {
     setError(null)
     try {
       if (!(await db.coachProfiles.get(coach.id))) await db.coachProfiles.put(coach)
-      await joinCoach(profile, coach, selected)
-      navigate('/', { replace: true })
+      if (coach.takesPayments) {
+        await payments.checkout(profile, coach, selected, plan)
+        if (payments.mode === 'demo') navigate('/', { replace: true })
+      } else {
+        await joinCoach(profile, coach, selected)
+        navigate('/', { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not join.')
     } finally {
@@ -122,10 +130,32 @@ export function OfferPage() {
 
       <div className="spacer" />
       <section className="stack" style={{ padding: '16px 20px 28px', background: 'var(--card)', borderTop: '1px solid var(--line)' }}>
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <span className="display" style={{ fontSize: 26, fontWeight: 700 }}>£{coach.priceGbp.toFixed(2)}<span className="muted" style={{ fontSize: 15, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}> / month</span></span>
-          <span className="muted small">Free while in beta</span>
-        </div>
+        {coach.takesPayments ? (
+          <>
+            <div className="segmented" role="radiogroup" aria-label="Plan">
+              <button type="button" role="radio" aria-checked={plan === 'monthly'} className="choice" aria-pressed={plan === 'monthly'} onClick={() => setPlan('monthly')} style={{ minHeight: 64 }}>
+                <span style={{ display: 'block' }}>Monthly</span>
+                <span className="small" style={{ fontWeight: 500 }}>{formatGbp(planPricePence(coach.priceGbp, 'monthly'))} / month</span>
+              </button>
+              <button type="button" role="radio" aria-checked={plan === 'annual'} className="choice" aria-pressed={plan === 'annual'} onClick={() => setPlan('annual')} style={{ minHeight: 64 }}>
+                <span style={{ display: 'block' }}>Annual · 2 months free</span>
+                <span className="small" style={{ fontWeight: 500 }}>{formatGbp(planPricePence(coach.priceGbp, 'annual'))} / year</span>
+              </button>
+            </div>
+            <span className="muted small">
+              {coach.trialDays > 0 ? `${coach.trialDays}-day free trial, then ` : ''}
+              {plan === 'annual'
+                ? `${formatGbp(planPricePence(coach.priceGbp, 'annual'))} a year (save ${formatGbp(annualSavingPence(coach.priceGbp))}).`
+                : `${formatGbp(planPricePence(coach.priceGbp, 'monthly'))} a month.`}{' '}
+              Cancel anytime.
+            </span>
+          </>
+        ) : (
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <span className="display" style={{ fontSize: 26, fontWeight: 700 }}>£{coach.priceGbp.toFixed(2)}<span className="muted" style={{ fontSize: 15, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}> / month</span></span>
+            <span className="muted small">Free while in beta</span>
+          </div>
+        )}
         {error && <p className="error" role="alert">{error}</p>}
         {isOwner ? (
           <Link to="/coach/profile" className="btn block">Edit your page</Link>
@@ -133,9 +163,16 @@ export function OfferPage() {
           <p className="muted small center">You're signed in as a coach. Members join from their own account.</p>
         ) : (
           <button type="button" className="btn block" onClick={() => void onJoin()} disabled={busy || !selected}>
-            {busy ? 'Joining…' : `Join ${coach.displayName.split(' ')[0]}`}
+            {busy
+              ? 'Please wait…'
+              : coach.takesPayments
+                ? coach.trialDays > 0
+                  ? `Start ${coach.trialDays}-day free trial`
+                  : `Subscribe to ${coach.displayName.split(' ')[0]}`
+                : `Join ${coach.displayName.split(' ')[0]}`}
           </button>
         )}
+        {coach.takesPayments && !isOwner && <span className="muted small center">Payments are handled securely by Stripe.{payments.mode === 'demo' ? ' Demo mode: no real card is charged.' : ''}</span>}
       </section>
     </main>
   )

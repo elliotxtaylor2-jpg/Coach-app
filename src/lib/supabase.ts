@@ -16,6 +16,9 @@ const REMOTE_TABLE: Record<TableName, string> = {
   workouts: 'workouts',
   workoutExercises: 'workout_exercises',
   sets: 'sets',
+  payoutAccounts: 'payout_accounts',
+  subscriptions: 'subscriptions',
+  payments: 'payments',
 }
 
 const toSnake = (s: string) => s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
