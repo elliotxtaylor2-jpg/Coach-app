@@ -37,8 +37,15 @@ export interface PlannedDay {
   exercises: PlannedExercise[]
 }
 
+/** How a programme moves weights on; absent means the defaults (on, +2.5 kg). */
+export interface ProgressionSettings {
+  enabled: boolean
+  incrementKg: number
+}
+
 export interface ProgrammeContent {
   weeks: { days: PlannedDay[] }[]
+  progression?: ProgressionSettings
 }
 
 export interface CoachProfile extends SyncedRow {
@@ -148,7 +155,10 @@ export interface WorkoutExercise extends SyncedRow {
   exerciseName: string
   position: number
   /** The coach's prescription, copied in when the session starts so later edits never change history. */
-  target?: Omit<PlannedExercise, 'id' | 'name'> | null
+  target?: (Omit<PlannedExercise, 'id' | 'name'> & {
+    /** Why the weights were pre-filled as they were, shown to the member. */
+    progression?: { kind: string; reason: string } | null
+  }) | null
 }
 
 export interface WorkoutSet extends SyncedRow {

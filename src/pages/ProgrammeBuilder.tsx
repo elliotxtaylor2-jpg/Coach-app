@@ -18,6 +18,7 @@ import {
 } from '../lib/coach'
 import { db } from '../lib/db'
 import { EXERCISES } from '../lib/exercises'
+import { DEFAULT_PROGRESSION, INCREMENT_CHOICES } from '../lib/progression'
 import type { PlannedExercise, Programme, ProgrammeContent } from '../lib/types'
 
 export function ProgrammeBuilder() {
@@ -68,6 +69,7 @@ function Editor({ initial }: { initial: Programme }) {
   const w = Math.min(week, weeks - 1)
   const d = Math.min(day, days - 1)
   const current = draft.weeks[w].days[d]
+  const progression = draft.progression ?? DEFAULT_PROGRESSION
 
   const updateDay = (fn: (exs: PlannedExercise[]) => PlannedExercise[], name?: string) => {
     setMessage(null)
@@ -134,6 +136,34 @@ function Editor({ initial }: { initial: Programme }) {
             {Array.from({ length: 7 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </div>
+      </div>
+
+      <div className="card flat stack" style={{ gap: 10 }}>
+        <label className="row between" htmlFor="auto-progress">
+          <span className="stack" style={{ gap: 2 }}>
+            <span className="strong">Auto-progress weights</span>
+            <span className="muted small">After each session, members' weights move up when they hit the top of the rep range.</span>
+          </span>
+          <input
+            id="auto-progress"
+            type="checkbox"
+            checked={progression.enabled}
+            onChange={(e) => setDraft((c) => ({ ...c, progression: { ...progression, enabled: e.target.checked } }))}
+          />
+        </label>
+        {progression.enabled && (
+          <div className="field">
+            <label htmlFor="increment" className="small">Weight jump</label>
+            <select
+              id="increment"
+              className="input"
+              value={progression.incrementKg}
+              onChange={(e) => setDraft((c) => ({ ...c, progression: { ...progression, incrementKg: Number(e.target.value) } }))}
+            >
+              {INCREMENT_CHOICES.map((n) => <option key={n} value={n}>+{n} kg</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="tabs" role="tablist" aria-label="Week">

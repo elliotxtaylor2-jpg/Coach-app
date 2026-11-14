@@ -89,7 +89,9 @@ describe('T13: today’s session from the programme', () => {
     expect(squat.target).toMatchObject({ sets: 4, reps: '5', load: 'RPE 7', notes: 'Brace hard' })
     const squatSets = await setsForExercise(squat.id)
     expect(squatSets).toHaveLength(4)
-    expect(squatSets.every((s) => s.weightKg === 77.5 && s.reps === 5)).toBe(true)
+    // Last time 77.5 kg × 6 beat the target of 5, so progressive overload adds the default 2.5 kg.
+    expect(squatSets.every((s) => s.weightKg === 80 && s.reps === 5)).toBe(true)
+    expect(squat.target?.progression).toMatchObject({ kind: 'up' })
     expect((await setsForExercise(plank.id)).every((s) => s.reps === null)).toBe(true) // timed set: no rep count
   })
 

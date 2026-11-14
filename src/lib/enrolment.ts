@@ -1,3 +1,4 @@
+import { DEFAULT_PROGRESSION, parseRepRange, recentSessions, suggestNext } from './progression'
 import { latestVersion, repsToNumber } from './coach'
 import { db } from './db'
 import { lastCompletedSet, newId, now, save } from './repo'
@@ -113,6 +114,12 @@ export async function startProgrammeSession(memberId: string, session: NextSessi
     } satisfies WorkoutExercise)
     const last = await lastCompletedSet(memberId, name)
     const targetReps = repsToNumber(planned.reps)
+    const settings = session.version.content.progression ?? DEFAULT_PROGRESSION
+    const range = parseRepRange(planned.reps)
+    const suggestion = settings.enabled && range ? suggestNext(await recentSessions(memberId, name, workout.id), range, settings) : null
+    if (suggestion && suggestion.reason) {
+      await save('workoutExercises', { ...exercise, target: { ...target, progression: { kind: suggestion.kind, reason: suggestion.reason } } })
+    }
     for (let i = 0; i < planned.sets; i++) {
       await save('sets', {
         id: newId(),
@@ -120,9 +127,10 @@ export async function startProgrammeSession(memberId: string, session: NextSessi
         workoutId: workout.id,
         workoutExerciseId: exercise.id,
         position: i,
-        weightKg: last?.weightKg ?? null,
-        reps: targetReps ?? last?.reps ?? null,
+        weightKg: suggestion ? suggestion.weightKg : (last?.weightKg ?? null),
+        reps: suggestion ? suggestion.reps : (targetReps ?? last?.reps ?? null),
         done: false,
+        rpe: null,
         updatedAt: t,
         deleted: false,
       } satisfies WorkoutSet)

@@ -193,6 +193,14 @@ a.list-item:hover, button.list-item:hover { background: #f7f2ea; color: var(--in
 .rest-timer .clock { font-family: var(--serif); font-size: 30px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; }
 .rest-timer .btn { min-height: 44px; background: var(--on-dark); color: var(--ink); border-color: var(--on-dark); padding: 0 18px; }
 
+/* Progression hint on an exercise */
+.progression { display: flex; gap: 8px; align-items: baseline; margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); background: var(--line-soft); border-radius: var(--radius-sm); padding: 10px 12px; }
+.progression > span { font-weight: 700; color: var(--muted); }
+.progression.up { background: var(--good-soft); }
+.progression.up > span { color: var(--good); }
+.progression.deload { background: var(--warn-soft); }
+.progression.deload > span { color: var(--warn); }
+
 /* Effort rating under a done set */
 .set-wrap.done { background: var(--good-soft); border-radius: var(--radius-sm); }
 .set-wrap.done .set-row.done { background: transparent; }

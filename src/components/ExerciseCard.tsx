@@ -29,6 +29,12 @@ export function ExerciseCard({
             {exercise.target.load ? ` · ${exercise.target.load}` : ''}
             {exercise.target.restSec ? ` · rest ${exercise.target.restSec}s` : ''}
           </span>
+          {exercise.target.progression?.reason && (
+            <p className={`progression ${exercise.target.progression.kind}`}>
+              <span aria-hidden="true">{exercise.target.progression.kind === 'up' ? '↑' : exercise.target.progression.kind === 'deload' ? '↓' : exercise.target.progression.kind === 'first' ? '•' : '→'}</span>
+              {exercise.target.progression.reason}
+            </p>
+          )}
           {exercise.target.notes && <p className="note">{exercise.target.notes}</p>}
           {exercise.target.videoUrl && /^https:\/\//.test(exercise.target.videoUrl) && (
             <a href={exercise.target.videoUrl} target="_blank" rel="noopener noreferrer" className="small">Watch demo</a>

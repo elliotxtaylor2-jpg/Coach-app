@@ -91,6 +91,7 @@ export function resizeContent(content: ProgrammeContent, weeks: number, daysPerW
   const w = Math.max(1, Math.min(52, Math.round(weeks)))
   const d = Math.max(1, Math.min(7, Math.round(daysPerWeek)))
   return {
+    ...content,
     weeks: Array.from({ length: w }, (_, wi) => ({
       days: Array.from({ length: d }, (_, di) => content.weeks[wi]?.days[di] ?? emptyDay(di)),
     })),
@@ -102,6 +103,7 @@ export function copyWeekToAll(content: ProgrammeContent, from: number): Programm
   const source = content.weeks[from]
   if (!source) return content
   return {
+    ...content,
     weeks: content.weeks.map((week, wi) =>
       wi === from
         ? week
